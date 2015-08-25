@@ -1,0 +1,29 @@
+# Data configuration - See PQconnectdb for more info
+database_conn_params: "dbname=daserver_test"
+
+# This sets the ip and ports used for any redirection
+server_ip : "127.0.0.1"
+login_port : 2610
+game_port : 2615
+
+# Rates (in percents)
+exp_rate : 100
+ap_rate : 100
+skill_rate : 100
+drop_rate : 100
+
+# A message to display on login
+login_message : "Welcome!"
+
+# Death penalties
+perish : true
+drop_on_death : true
+drop_gold_on_death : true
+lose_exp : true
+lose_hp : true
+
+# Portals
+use_min_portal_level : true
+use_max_portal_level : true
+
+
