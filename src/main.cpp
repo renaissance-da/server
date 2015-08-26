@@ -75,8 +75,16 @@ int main()
 	if (!config::parse("daserver.conf")) {
 	    return 1;
 	}
-	log4cplus::BasicConfigurator config;
-	config.configure();
+
+	std::ifstream lconf(config::log_conf);
+	if (lconf.good()) {
+	    log4cplus::PropertyConfigurator config(lconf);
+	    config.configure();
+	}
+	else {
+	    log4cplus::BasicConfigurator config;
+	    config.configure();
+	}
 
 	log4cplus::Logger log = log4cplus::Logger::getInstance("renaissance");
 

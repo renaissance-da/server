@@ -6,6 +6,9 @@ server_ip : "127.0.0.1"
 login_port : 2610
 game_port : 2615
 
+# Logger settings - ignored if file doesn't exist
+logger_config: "log.conf"
+
 # Rates (in percents)
 exp_rate : 100
 ap_rate : 100

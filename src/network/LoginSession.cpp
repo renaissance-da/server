@@ -94,6 +94,7 @@ void LoginSession::initMessages()
 LoginSession::LoginSession(int fd, in_addr_t ip, int now) :
     BasicSession(fd, now, ip), service(new EncryptionService()), ordinal(0)
 {
+    LOG4CPLUS_TRACE(log, "Accepted connection from " << getIpString());
     // Send welcome message
     char data[] = { 0x1b, 'C', 'O', 'N', 'N', 'E', 'C', 'T', 'E', 'D', ' ', 'S',
         'E', 'R', 'V', 'E', 'R', 0x0a };
