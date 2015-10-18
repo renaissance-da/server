@@ -20,6 +20,7 @@ char config::ipaddr[sizeof(in_addr)];
 unsigned short config::loginPort;
 unsigned short config::gamePort;
 const char *config::motd;
+const char *config::motd_filename;
 const char *config::log_conf;
 const char *config::db_conn_params;
 libconfig::Config *config::cfg;
@@ -48,6 +49,7 @@ bool config::parse(const char *configFile)
         loginPort = (unsigned int) cfg->lookup("login_port");
         gamePort = (unsigned int) cfg->lookup("game_port");
         motd = cfg->lookup("login_message");
+	motd_filename = cfg->lookup("motd_file");
 	log_conf = cfg->lookup("logger_config");
         itemsPerish = cfg->lookup("perish");
         itemsDrop = cfg->lookup("drop_on_death");

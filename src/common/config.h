@@ -14,7 +14,7 @@ namespace config
 {
 extern char ipaddr[4];
 extern unsigned short loginPort, gamePort;
-extern const char *motd, *log_conf;
+extern const char *motd, *log_conf, *motd_filename;
 extern libconfig::Config *cfg;
 extern bool itemsPerish, itemsDrop, goldDrops, loseExp, loseHp, useMinPortal,
     useMaxPortal;

@@ -17,6 +17,8 @@ drop_rate : 100
 
 # A message to display on login
 login_message : "Welcome!"
+# Longer message file
+motd_file : "motd.txt"
 
 # Death penalties
 perish : true
