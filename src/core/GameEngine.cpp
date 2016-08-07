@@ -25,6 +25,9 @@
 #include "LuaAI.h"
 #include "core.h"
 
+#include <log4cplus/logger.h>
+#include <log4cplus/loggingmacros.h>
+
 void registerAI()
 {
     mob::registerAI(0, "Standard AI", [=](int param, Mob *m) {

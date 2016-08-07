@@ -12,7 +12,7 @@ __thread std::set<int> *locks;
 /**
  * Add the given lock ID to this thread's set of held locks.
  * \param[in] lockId A unique identifier representing the lock.
- * \return True if lockId is smaller than every currently held lock's ID,
+ * \return True if lockId is greater than every currently held lock's ID,
  * false otherwise.
  */
 bool LockSet::addLock(int lockId)

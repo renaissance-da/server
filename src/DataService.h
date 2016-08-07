@@ -15,6 +15,7 @@
 #include <pthread.h>
 #include "DAPacket.h"
 #include "Guild.h"
+#include <mutex>
 
 //TODO this should go in a module for managing server instances
 void addToBlacklists(in_addr_t ip_addr, int exp);
@@ -94,6 +95,8 @@ private:
 
 	CharacterList *characters;
 	pthread_mutex_t onlineLock;
+	std::mutex groupsLock;
+	typedef std::lock_guard<std::mutex> guard_t;
 
 	std::map<unsigned short, Map *> maps;
 	unsigned char infoTick;

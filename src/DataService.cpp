@@ -234,10 +234,10 @@ void DataService::leaveMap(Character *c)
 
 void DataService::freeCharacter(Character *c)
 {
-	Map *m = c->getMap();
-	m->lock();
-	leaveMap(c);
-	m->unlock();
+	{
+		LockedChar lc = c;
+		leaveMap(lc.get());
+	}
 
 	leaveGroup(c);
 	lock();
@@ -248,7 +248,7 @@ void DataService::freeCharacter(Character *c)
 
 void DataService::groupListMembers(IDataStream *dp, Character *c)
 {
-	lock();
+	guard_t lg(groupsLock);
 	Group *g = c->getGroup();
 	if (g) {
 		char buffer[256];
@@ -268,7 +268,6 @@ void DataService::groupListMembers(IDataStream *dp, Character *c)
 	else {
 		dp->appendString(0x11, "Adventuring alone");
 	}
-	unlock();
 }
 
 void DataService::groupDistributeExp(unsigned int exp, unsigned short level, int mobId, Entity *e)
@@ -280,6 +279,7 @@ void DataService::groupDistributeExp(unsigned int exp, unsigned short level, int
 		int maxLevel = 0, pLevel = 0, dist;
 		short n = 0;
 
+		guard_t lg(groupsLock);
 		Group *g = c->getGroup();
 		if (!g) {
 			maxLevel = c->getLevel();
@@ -372,7 +372,7 @@ void DataService::sendWhisper(CharacterSession *s, std::string &recip, std::stri
 
 void DataService::groupChat(CharacterSession *s, std::string &msg)
 {
-	lock();
+	guard_t lg(groupsLock);
 	Group *g = s->getCharacter()->getGroup();
 	if (g) {
 		char buffer[100];
@@ -384,7 +384,6 @@ void DataService::groupChat(CharacterSession *s, std::string &msg)
 	else {
 		Server::sendMessage(s, "You are not in a group.", 0);
 	}
-	unlock();
 }
 
 void DataService::guildChat(CharacterSession *s, std::string &msg)
@@ -496,20 +495,22 @@ void DataService::gotoChar(const char *name, Character *c)
 	auto cs = characters->find(name);
 	if (cs != characters->end()) {
 		Character *t = cs->second->getCharacter();
-		Map *m = c->getMap();
-		m->lock();
-		Server::leaveMap(c->getSession());
-		m->removeEntity(c);
-		m->unlock();
-		m = t->getMap();
-		m->lock();
-		c->setMap(m);
-		// TODO this probably wrong
-		c->setX(t->getX());
-		c->setY(t->getY());
-		c->changedMap(m);
-		m->addEntity(c, 3);
-		m->unlock();
+		{
+			LockedChar lc = c;
+			Map *m = lc->getMap();
+			Server::leaveMap(lc->getSession());
+			m->removeEntity(lc.get());
+		}
+		{
+			LockedChar tc = t;
+			Map *m = tc->getMap();
+			c->setMap(m);
+			// TODO this probably wrong
+			c->setX(tc->getX());
+			c->setY(tc->getY());
+			c->changedMap(m);
+			m->addEntity(c, 3);
+		}
 	}
 	else {
 		unlock();
@@ -528,19 +529,21 @@ void DataService::recallChar(const char *name, int priv, Character *c)
 			unlock();
 			throw E_INVALID;
 		}
-		Map *m = t->getMap();
-		m->lock();
-		Server::leaveMap(cs->second);
-		m->removeEntity(t);
-		m->unlock();
-		m = c->getMap();
-		m->lock();
-		t->setMap(m);
-		t->changedMap(m);
-		t->setX(c->getX());
-		t->setY(c->getY());
-		m->addEntity(t, 3);
-		m->unlock();
+		{
+			LockedChar tc = t;
+			Map *m = tc->getMap();
+			Server::leaveMap(cs->second);
+			m->removeEntity(tc.get());
+		}
+		{
+			LockedChar lc = c;
+			Map *m = lc->getMap();
+			t->setMap(m);
+			t->changedMap(m);
+			t->setX(lc->getX());
+			t->setY(lc->getY());
+			m->addEntity(t, 3);
+		}
 	}
 	else {
 		unlock();
@@ -585,10 +588,11 @@ void DataService::deleteGuild(Guild *g)
 void DataService::groupInvite(Character *m, std::string nm)
 {
 	lock();
-	//lower(nm);
 	auto it = characters->find(nm);
 	if (it != characters->end()) {
 		Character *c = it->second->getCharacter();
+		guard_t lg(groupsLock);
+
 		if (c->canInvite()) {
 			Server::groupInvite(c->getSession(), m->getName().size(), m->getName().c_str());
 		}
@@ -615,6 +619,8 @@ void DataService::groupAccept(Character *m, std::string gn)
 	auto it = characters->find(gn);
 	if (it != characters->end()) {
 		Character *gm = it->second->getCharacter();
+		guard_t lg(groupsLock);
+
 		Group *group = gm->getGroup();
 		if (!group) {
 			//create group
@@ -642,7 +648,7 @@ void DataService::groupAccept(Character *m, std::string gn)
 
 void DataService::leaveGroup(Character *c)
 {
-	lock();
+	guard_t lg(groupsLock);
 	Group *group = c->getGroup();
 	if (group) {
 		if (group->size() > 2) {
@@ -663,7 +669,6 @@ void DataService::leaveGroup(Character *c)
 			delete group;
 		}
 	}
-	unlock();
 }
 
 void DataService::broadcast(const char *msg)
@@ -702,11 +707,10 @@ void DataService::tick()
 		lock(); //to use the characters list, probably a good idea to change
 
 		std::for_each(characters->begin(), characters->end(), [&](std::pair<std::string, CharacterSession *> p) {
-			p.second->getCharacter()->getMap()->lock();
+			LockedChar lc = p.second->getCharacter();
 			Database::cm->lock(); //to use the char manager
-			Database::cm->saveCharacter(p.second->getCharacter());
+			Database::cm->saveCharacter(lc.get());
 			Database::cm->unlock();
-			p.second->getCharacter()->getMap()->unlock();
 		});
 
 		Database::cm->lock();

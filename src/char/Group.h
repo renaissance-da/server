@@ -12,6 +12,7 @@
 #include "Instance.h"
 #include <atomic>
 #include <set>
+#include <mutex>
 
 class Character;
 
@@ -22,6 +23,8 @@ public:
     virtual ~Group();
 
     Instance *getInstance(unsigned short mapid, bool *isNew);
+
+
 
 private:
     static std::atomic_uint groupIds;

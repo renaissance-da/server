@@ -49,6 +49,7 @@ find_library(LOG4CPLUS_LIBRARY_RELEASE
     ${LOG4CPLUS_LIB_NAMES_RELEASE}
   PATH_SUFFIXES lib
   PATHS
+    /usr/lib/x86_64-linux-gnu
     /usr/local
     /usr
     /sw

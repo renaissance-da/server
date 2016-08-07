@@ -10,6 +10,7 @@
 #include "BasicSession.h"
 #include "EncryptionService.h"
 #include "Character.h"
+#include "LockedChar.h"
 #include <pthread.h>
 #include <atomic>
 

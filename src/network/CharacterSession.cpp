@@ -253,10 +253,8 @@ void CharacterSession::useSecret(DAPacket *p)
 	if (p->getDataLen() >= 5) {
 		oid = p->extractInt();
 	}
-	Map *m = character->getMap();
-	m->lock();
-	character->useSecret(slot, oid);
-	m->unlock();
+	LockedChar lc = character;
+	lc->useSecret(slot, oid);
 }
 
 void CharacterSession::giveItem(DAPacket *p)
@@ -266,11 +264,8 @@ void CharacterSession::giveItem(DAPacket *p)
 	int oid = p->extractInt();
 	if (slot > NUM_ITEMS || slot < 0)
 		return;
-	Map *m = character->getMap();
-	m->lock();
-	character->giveItem(oid, slot);
-	m->unlock();
-
+	LockedChar lc = character;
+	lc->giveItem(oid, slot);
 }
 
 void CharacterSession::trade(DAPacket *p)
@@ -279,40 +274,38 @@ void CharacterSession::trade(DAPacket *p)
 	char type = p->extractByte();
 	int oid = p->extractInt();
 
-	Map *m = character->getMap();
-	m->lock();
+	LockedChar lc = character;
 	switch (type) {
 	case 0:
 		//Start trade
-		character->startTrade(oid);
+		lc->startTrade(oid);
 		break;
 	case 1:
 		//Add item
-		character->tradeItem(oid, p->extractByte());
+		lc->tradeItem(oid, p->extractByte());
 		break;
 	case 2:
 		//Add x of an item
 		char slot, amt;
 		slot = p->extractByte();
 		amt = p->extractByte();
-		character->tradeItem(oid, slot, amt);
+		lc->tradeItem(oid, slot, amt);
 		break;
 	case 3:
 		//Add gold
-		character->tradeGold(oid, p->extractInt());
+		lc->tradeGold(oid, p->extractInt());
 		break;
 	case 4:
 		//Cancel trade
-		character->cancelTrade();
+		lc->cancelTrade();
 		break;
 	case 5:
 		//confirm trade
-		character->confirmTrade();
+		lc->confirmTrade();
 		break;
 	default:
 		break;
 	}
-	m->unlock();
 }
 
 void CharacterSession::startCasting(DAPacket *p)
@@ -339,10 +332,8 @@ void CharacterSession::fieldWarp(DAPacket *p)
 
 	p->skip(2);
 	short mapId = p->extractShort();
-	Map *m = character->getMap();
-	m->lock();
-	character->fieldJump(mapId);
-	m->unlock();
+	LockedChar lc = character;
+	lc->fieldJump(mapId);
 }
 
 void CharacterSession::chant(DAPacket *p)
@@ -355,12 +346,11 @@ void CharacterSession::chant(DAPacket *p)
 	if (text.length() > 32)
 		text = text.substr(0, 32);
 
-	Map *m = character->getMap();
-	m->lock();
-	m->forEachNearby(character, [&](Entity *e) {
-		e->talked(character, text, 2);
+	LockedChar lc = character;
+	Map *m = lc->getMap();
+	m->forEachNearby(lc.get(), [&](Entity *e) {
+		e->talked(lc.get(), text, 2);
 	});
-	m->unlock();
 }
 
 void CharacterSession::toggleGroup()
@@ -388,10 +378,8 @@ void CharacterSession::emote(DAPacket *p)
 	if (em > 0x23)
 		return;
 	em += 9;
-	Map *m = character->getMap();
-	m->lock();
-	character->doAction(em, 0x78);
-	m->unlock();
+	LockedChar lc = character;
+	lc->doAction(em, 0x78);
 }
 
 void CharacterSession::giveGold(DAPacket *p)
@@ -401,10 +389,8 @@ void CharacterSession::giveGold(DAPacket *p)
 	unsigned int amt = p->extractInt();
 	int oid = p->extractInt();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->giveGold(oid, amt);
-	m->unlock();
+	LockedChar lc = character;
+	lc->giveGold(oid, amt);
 }
 
 void CharacterSession::showBoard(DAPacket *p)
@@ -437,13 +423,13 @@ void CharacterSession::resumeConv(DAPacket *p)
 	int oid = p->extractInt();
 	unsigned short opt = p->extractShort();
 
-	Map *m = character->getMap();
-	m->lock();
-	Entity *e = m->getNearByOid(character, oid);
+	LockedChar lc = character;
+	Map *m = lc->getMap();
+	Entity *e = m->getNearByOid(lc.get(), oid);
 	if (e || !oid) {
 		if (opt == 0x4A || opt == 0x11 || opt == 0x17) { //0x4a = buy, 0x11 = learn secret 0x17 = learn skill
 			std::string rep = p->extractString();
-			resumeDlg(character, e, rep);
+			resumeDlg(lc.get(), e, rep);
 		}
 		else if (opt == 0x4D || opt == 0x13 || opt == 0x19) { //0x13 = forget secret 0x19 = forget skill
 			unsigned short slot;
@@ -455,21 +441,19 @@ void CharacterSession::resumeConv(DAPacket *p)
 				slot = s;
 			}
 
-			resumeDlg(character, e, slot);
+			resumeDlg(lc.get(), e, slot);
 		}
 		else if (opt == 0x4F) {
 			/*short check = */p->extractShort(); //not sure what check should be but its not needed
 			std::string rep = p->extractString();
-			resumeDlg(character, e, rep);
+			resumeDlg(lc.get(), e, rep);
 		}
 		else
-			resumeDlg(character, e, opt);
+			resumeDlg(lc.get(), e, opt);
 	}
 	else {
 		//Player made a bad request
 	}
-
-	m->unlock();
 }
 
 void CharacterSession::resumeConvLong(DAPacket *p)
@@ -491,16 +475,15 @@ void CharacterSession::resumeConvLong(DAPacket *p)
 	if (p->extractByte() == 2)
 		rep = p->extractString();
 
-	Map *m = character->getMap();
-	m->lock();
-	Entity *e = m->getNearByOid(character, oid);
+	LockedChar lc = character;
+	Map *m = lc->getMap();
+	Entity *e = m->getNearByOid(lc.get(), oid);
 	if (e || !oid) {
 		if (rep.empty())
-			resumeDlg(character, e, off);
+			resumeDlg(lc.get(), e, off);
 		else
-			resumeDlg(character, e, rep);
+			resumeDlg(lc.get(), e, rep);
 	}
-	m->unlock();
 }
 
 void CharacterSession::dropItem(DAPacket *p)
@@ -511,10 +494,8 @@ void CharacterSession::dropItem(DAPacket *p)
 	unsigned short y = p->extractShort();
 	unsigned int numDropped = p->extractInt();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->dropItem(slot, x, y, numDropped);
-	m->unlock();
+	LockedChar lc = character;
+	lc->dropItem(slot, x, y, numDropped);
 }
 
 void CharacterSession::unequipItem(DAPacket *p)
@@ -522,10 +503,8 @@ void CharacterSession::unequipItem(DAPacket *p)
 	service->decrypt(p);
 	char slot = p->extractByte();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->unequip(slot);
-	m->unlock();
+	LockedChar lc = character;
+	lc->unequip(slot);
 }
 
 void CharacterSession::whisper(DAPacket *p)
@@ -549,10 +528,8 @@ void CharacterSession::dropGold(DAPacket *p)
 	unsigned short x = p->extractShort();
 	unsigned short y = p->extractShort();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->dropGold(amtDropped, x, y);
-	m->unlock();
+	LockedChar lc = character;
+	lc->dropGold(amtDropped, x, y);
 }
 
 void CharacterSession::movePane(DAPacket *p)
@@ -562,34 +539,28 @@ void CharacterSession::movePane(DAPacket *p)
 	char src = p->extractByte();
 	char dst = p->extractByte();
 
-	Map *m = character->getMap();
-	m->lock();
+	LockedChar lc = character;
 	if (pane == 2) { //skills pane
-		character->swapSkills(dst,src);
+		lc->swapSkills(dst,src);
 	}
 	else if (pane == 1) { //spells pane
-		character->swapSecrets(dst,src);
+		lc->swapSecrets(dst,src);
 	}
 	else if (pane == 0) { //inventory
-		character->swapInv(dst,src);
+		lc->swapInv(dst,src);
 	}
-	m->unlock();
 }
 
 void CharacterSession::attack()
 {
-	Map *m = character->getMap();
-	m->lock();
-	character->attack();
-	m->unlock();
+	LockedChar lc = character;
+	lc->attack();
 }
 
 void CharacterSession::refresh()
 {
-	Map *m = character->getMap();
-	m->lock();
-	character->refresh();
-	m->unlock();
+	LockedChar lc = character;
+	lc->refresh();
 }
 
 void CharacterSession::useSkill(DAPacket *p)
@@ -597,10 +568,8 @@ void CharacterSession::useSkill(DAPacket *p)
 	service->decrypt(p);
 	char slot = p->extractByte();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->useSkill(slot);
-	m->unlock();
+	LockedChar lc = character;
+	lc->useSkill(slot);
 }
 
 void CharacterSession::useItem(DAPacket *p)
@@ -608,10 +577,8 @@ void CharacterSession::useItem(DAPacket *p)
 	service->decrypt(p);
 	char slot = p->extractByte();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->useItem(slot);
-	m->unlock();
+	LockedChar lc = character;
+	lc->useItem(slot);
 }
 
 void CharacterSession::turn(DAPacket *p)
@@ -620,10 +587,8 @@ void CharacterSession::turn(DAPacket *p)
 
 	char dir = p->extractByte();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->tryTurn(dir); //ignoring turn failure
-	m->unlock();
+	LockedChar lc = character;
+	lc->tryTurn(dir); //ignoring turn failure
 }
 
 void CharacterSession::clicked(DAPacket *p)
@@ -636,18 +601,14 @@ void CharacterSession::clicked(DAPacket *p)
 		unsigned short y = p->extractShort();
 		/*char active = */p->extractByte(); //indicates if the player clicked from the background
 		//if (active)
-		Map *m = character->getMap();
-		m->lock();
-		character->clickGround(x, y);
-		m->unlock();
+		LockedChar lc = character;
+		lc->clickGround(x, y);
 	}
 	else if (clickType == 1) {
 		int oid = p->extractInt();
 
-		Map *m = character->getMap();
-		m->lock();
-		character->clickEntity(oid);
-		m->unlock();
+		LockedChar lc = character;
+		lc->clickEntity(oid);
 	}
 }
 
@@ -692,14 +653,12 @@ void CharacterSession::move(DAPacket *p)
 	}
 
 	//Move the player
-	Map *m = character->getMap();
-	m->lock();
-	if (!character->tryMove(dir)) {
+	LockedChar lc = character;
+	if (!lc->tryMove(dir)) {
 		// Report failed move
-		Server::movedSelf(this, character->getX(), character->getY(), 4);
+		Server::movedSelf(this, lc->getX(), lc->getY(), 4);
 
 	}
-	m->unlock();
 
 }
 
@@ -741,10 +700,9 @@ void CharacterSession::talk(DAPacket *p)
 			LOG4CPLUS_INFO(core::log, display);
 		}
 		else if (domain == 0) {
-			Map *m = character->getMap();
-			m->lock();
-			m->talked(character, text);
-			m->unlock();
+			LockedChar lc = character;
+			Map *m = lc->getMap();
+			m->talked(lc.get(), text);
 		}
 		else {
 			//Unrecognised domain
@@ -774,13 +732,11 @@ void CharacterSession::talk(DAPacket *p)
 			systemMessage("Check your privileges.", 3);
 		}
 		else {
-			Map *m = character->getMap();
-			m->lock();
+			LockedChar lc = character;
 			//DataService::getService()->leaveMap(character);
-			if (!DataService::getService()->tryChangeMap(character, c.p1, c.p2, c.p3, 3)) {
+			if (!DataService::getService()->tryChangeMap(lc.get(), c.p1, c.p2, c.p3, 3)) {
 				systemMessage("Map not found, or coordinates given were invalid", 3);
 			}
-			m->unlock();
 		}
 	}
 	else if (c.cmd == SPAWN_MOB) {
@@ -788,20 +744,16 @@ void CharacterSession::talk(DAPacket *p)
 			systemMessage("Check your privileges.", 3);
 		}
 		else {
-			Map *m = character->getMap();
-			m->lock();
-			Mob *mob = mob::MobInfo::spawnById(c.p1, character->getX(),
-					character->getY(), character->getMap());
+			LockedChar lc = character;
+			Mob *mob = mob::MobInfo::spawnById(c.p1, lc->getX(),
+					lc->getY(), lc->getMap());
 			if (!mob)
 				systemMessage("Mob not found.", 3);
-			m->unlock();
 		}
 	}
 	else if (c.cmd == PLAY_EFFECT) { //TODO privilege level up
-		Map *m = character->getMap();
-		m->lock();
-		character->playEffect(c.p1, 100);
-		m->unlock();
+		LockedChar lc = character;
+		lc->playEffect(c.p1, 100);
 	}
 	else if (c.cmd == ITM) {
 		if (character->getPrivilegeLevel() < 5) {
@@ -814,11 +766,9 @@ void CharacterSession::talk(DAPacket *p)
 				return;
 			}
 			Item *item = new Item(base);
-			Map *m = character->getMap();
-			m->lock();
-			if (!character->getItem(item))
+			LockedChar lc = character;
+			if (!lc->getItem(item))
 				delete item;
-			m->unlock();
 		}
 	}
 	else if (c.cmd == PVP) {
@@ -826,10 +776,9 @@ void CharacterSession::talk(DAPacket *p)
 			systemMessage("Check your privileges.", 3);
 		}
 		else {
-			Map *m = character->getMap();
-			m->lock();
+			LockedChar lc = character;
+			Map *m = lc->getMap();
 			m->togglePvp();
-			m->unlock();
 		}
 	}
 	else if (c.cmd == RELOAD) {
@@ -969,10 +918,8 @@ void CharacterSession::pickupItem(DAPacket *p)
 	unsigned short x = p->extractShort();
 	unsigned short y = p->extractShort();
 
-	Map *m = character->getMap();
-	m->lock();
-	character->pickupItem(slot, x, y);
-	m->unlock();
+	LockedChar lc = character;
+	lc->pickupItem(slot, x, y);
 }
 
 void CharacterSession::getExtraInfo()
@@ -986,10 +933,10 @@ void CharacterSession::getLegendData()
 	unsigned char data[] = {ordinal++};
 	rep = new DAPacket(Server::LEGEND_DATA, (char *)data, 1);
 
-	Map *m = character->getMap();
-	m->lock();
-	character->getLegendInfo(rep);
-	m->unlock();
+	{
+		LockedChar lc = character;
+		lc->getLegendInfo(rep);
+	}
 
 	service->encrypt(rep);
 
@@ -1039,16 +986,12 @@ void CharacterSession::incStat(DAPacket *p)
 	//str=1, wis=0x10, int=0x04, dex=0x02 presumably con=0x08, oddly not synch with stat order
 	//server response is 0x0A (message) then 0x08 0x24 (updated primary + secondary, no hpmp or points)
 
-	Map *m = character->getMap();
-	m->lock();
-	character->incStat(which);
-	m->unlock();
-
+	LockedChar lc = character;
+	lc->incStat(which);
 }
 
 void CharacterSession::getCharacterInfo()
 {
-
 	DAPacket *rep;
 	Server::updateStatInfo(this, character, Character::FLAG_ALL);
 
@@ -1083,11 +1026,10 @@ void CharacterSession::getCharacterInfo()
 	rep->writeData(fd);
 	delete rep;
 
-	Map *m = character->getMap();
-	m->lock();
-	DataService::getService()->enterMap(character); //sends prev 3, and char_data blocks
-	//the blocks under this one probably belong to this function too
-	m->unlock();
+	{
+		LockedChar lc = character;
+		DataService::getService()->enterMap(character);
+	}
 
 	lock();
 

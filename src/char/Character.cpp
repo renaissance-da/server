@@ -1135,9 +1135,7 @@ void Character::getLegendInfo(IDataStream *dp)
     //TODO there are some issues with group synchronization which arise because the group is
     //protected by the dataservice lock
     Map *m = getMap();
-    m->unlock();
     DataService::getService()->groupListMembers(dp, this);
-    m->lock();
 
     dp->appendByte((settings & JOIN_A_GROUP) / JOIN_A_GROUP);
     dp->appendByte(0); //has to be a byte, not sure what it does
@@ -2887,11 +2885,8 @@ bool Character::withdraw(int slot, int qty)
         return false;
     }
 
-    //have to unlock map to call this
-    getMap()->unlock();
     DataService::getService()->updateStoredItem(charId, storage[slot].id,
         storage[slot].qty - qty, storage[slot].mod);
-    getMap()->lock();
 
     if (storage[slot].qty == qty) {
         storage[slot] = storage[storage.size() - 1];
@@ -2929,10 +2924,8 @@ bool Character::deposit(Item *itm)
             else
                 ++(si.qty);
             found = true;
-            getMap()->unlock();
             DataService::getService()->updateStoredItem(charId, si.id, si.qty,
                 si.mod);
-            getMap()->lock();
             break;
         }
     }
@@ -2944,9 +2937,7 @@ bool Character::deposit(Item *itm)
         ni.mod = itm->getMod();
         ni.qty = itm->getMaxQty() ? itm->getQty() : 1;
         storage.push_back(ni);
-        getMap()->unlock();
         DataService::getService()->storeItem(charId, ni.id, ni.qty, ni.mod);
-        getMap()->lock();
     }
 
     return true;

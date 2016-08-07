@@ -9,6 +9,7 @@
 #define SCRIPT_H_
 
 #include "log4cplus/logger.h"
+#include "log4cplus/loggingmacros.h"
 
 #define REGISTER(TOKEN) lua_register(L, "NPC_" #TOKEN, TOKEN)
 

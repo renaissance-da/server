@@ -45,7 +45,8 @@ core/Viewable.cpp        mob/MobWatcher.cpp      mob/MobInfo.cpp
 mob/LuaAI.cpp            script/ai_bindings.cpp  script/entity_bindings.cpp
 script/map_bindings.cpp  script/script.cpp       mob/ai_broker.cpp
 core/Timer.cpp           script/ScriptTimer.cpp  char/Group.cpp
-core/Instance.cpp        char/Guild.cpp          common/LockSet.cpp)
+core/Instance.cpp        char/Guild.cpp          common/LockSet.cpp
+char/LockedChar.cpp)
 
 include_directories(. char common core Database mob network script ${PostgreSQL_INCLUDE_DIRS} ${LUA_INCLUDE_DIR}
   ${LOG4CPLUS_INCLUDE_DIR})
