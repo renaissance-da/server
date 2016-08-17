@@ -8,12 +8,7 @@
 #ifndef AI_BINDINGS_H_
 #define AI_BINDINGS_H_
 
-#ifdef WIN32
-#include <lua.hpp>
-#else
-#include <lua5.2/lua.hpp>
-#endif
-
+#include "lua.hpp"
 #include "Mob.h"
 
 namespace script

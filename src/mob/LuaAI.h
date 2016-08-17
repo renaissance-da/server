@@ -9,7 +9,7 @@
 #define LUAAI_H_
 
 #include <MobAI.h>
-#include <lua5.2/lua.hpp>
+#include "lua.hpp"
 
 class LuaAI: public MobAI {
 public:

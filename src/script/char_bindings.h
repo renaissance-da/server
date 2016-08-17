@@ -8,11 +8,7 @@
 #ifndef CHARBINDINGS_H_
 #define CHARBINDINGS_H_
 
-#ifdef WIN32
-#include <lua.hpp>
-#else
-#include <lua5.2/lua.hpp>
-#endif
+#include "lua.hpp"
 
 namespace script {
 	void loadCharBindings(lua_State *L);

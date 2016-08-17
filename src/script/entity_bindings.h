@@ -8,12 +8,7 @@
 #ifndef ENTITY_BINDINGS_H_
 #define ENTITY_BINDINGS_H_
 
-#ifdef WIN32
-#include <lua.hpp>
-#else
-#include <lua5.2/lua.hpp>
-#endif
-
+#include "lua.hpp"
 #include "Entity.h"
 
 namespace script

@@ -8,11 +8,7 @@
 #ifndef NPC_BINDINGS_H_
 #define NPC_BINDINGS_H_
 
-#ifdef WIN32
-#include <lua.hpp>
-#else
-#include <lua5.2/lua.hpp>
-#endif
+#include "lua.hpp"
 
 #include "srv_proto.h"
 #include "CharacterSession.h"
