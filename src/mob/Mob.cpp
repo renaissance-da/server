@@ -17,7 +17,7 @@
 Mob::Mob(unsigned short x, unsigned short y, Map *map, unsigned short apr, int id,
 		unsigned int hp, unsigned int min, unsigned short max, unsigned int exp, std::string name,
 		unsigned short mode, unsigned short lev, Element atk, Element def, short ac, short power,
-		short mr, short dex, bool small, unsigned short regen, short submode):
+		short mr, short dex, bool isSmall, unsigned short regen, short submode):
 Entity(x, y, map, name),
 appearance(apr),
 mode(mode),
@@ -33,7 +33,7 @@ mobAssail(3, (Path)0, 100),
 spawner(0),
 a(atk),
 d(def),
-small(small)
+small_(isSmall)
 {
 	this->hp = hp;
 	stats.setMaxHp(hp);
@@ -137,10 +137,10 @@ void Mob::dropItems(Entity *owner)
 	}
 
 	for (auto it = items.begin(); it != items.end(); it = items.erase(it))
-		if (!m->putItem((*it), getX(), getY(), &protect, 120))
+		if (!m->putItem((*it), getX(), getY(), &protect, std::chrono::minutes(2)))
 			delete (*it);
 
-	m->putGold(gold, getX(), getY(), &protect, 120);
+	m->putGold(gold, getX(), getY(), &protect, std::chrono::minutes(2));
 }
 
 void Mob::getViewedBlock(IDataStream *dp)

@@ -11,13 +11,13 @@
 #include "EncryptionService.h"
 #include "Character.h"
 #include "LockedChar.h"
-#include <pthread.h>
 #include <atomic>
+#include <mutex>
 
 class CharacterSession: public BasicSession
 {
 public:
-    CharacterSession(int sockfd, in_addr_t ip, int now);
+    CharacterSession(int sockfd, uint32_t ip, int now);
     virtual ~CharacterSession();
 
     void dataReady();
@@ -91,7 +91,7 @@ private:
     void giveGold(DAPacket *p);
     void settings(DAPacket *p);
 
-    pthread_mutex_t writelock; //must be held before writing on the socket. must not be held while locking a map(that is, a map lock must be acquired FIRST)
+	std::mutex writelock;
     //efficiency considerations: it's hard to say at the moment if an atomic would be faster (but probably would be)
 };
 

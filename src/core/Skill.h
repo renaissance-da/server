@@ -65,7 +65,7 @@ public:
     }
     bool canLevel()
     {
-        return base->rate >= 0 && 100 * base->rate <= uses && level < maxlevel;
+        return base->rate >= 0 && 100 * (unsigned)base->rate <= uses && level < maxlevel;
     }
     void levelUp();
     bool canLearn(const Stats *st, short level);

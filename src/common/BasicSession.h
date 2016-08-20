@@ -11,13 +11,20 @@
 #ifndef BASICSESSION_H_
 #define BASICSESSION_H_
 #include <stdlib.h>
-#include <netinet/in.h>
 #include <sstream>
+
+#ifdef WIN32
+#include <WinSock2.h>
+#else
+#include <arpa/inet.h>
+#endif
+
+#include <cstdint>
 
 class BasicSession
 {
 public:
-    BasicSession(int fd, int time, in_addr_t clientIp);
+    BasicSession(int fd, int time, uint32_t clientIp);
     virtual ~BasicSession();
 
     virtual void dataReady() = 0;
@@ -33,7 +40,7 @@ public:
 
     int getFd();
     bool isOpen();
-    in_addr_t getIp()
+    uint32_t getIp()
     {
         return clientIp;
     }
@@ -51,7 +58,7 @@ public:
 protected:
     int fd;
     bool open;
-    in_addr_t clientIp;
+    uint32_t clientIp;
     int lastRecv, now;
 };
 

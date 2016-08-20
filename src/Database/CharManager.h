@@ -17,7 +17,6 @@
 #else
 #include <postgresql/libpq-fe.h>
 #endif
-#include <pthread.h>
 #include <unordered_map>
 
 class Character;
@@ -199,9 +198,8 @@ private:
     std::vector<TrackerEntry> trackers;
     std::unordered_map<std::string, int> banned;
 
-    pthread_t worker;
+	std::thread worker;
     std::mutex cmlock;
-    bool canJoin;
 };
 
 } /* namespace Database */

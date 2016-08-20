@@ -35,6 +35,7 @@
 
 #ifdef WIN32
 #include <WinSock2.h>
+#define HAVE_STRUCT_TIMESPEC
 #include <libpq-fe.h>
 #include <Windows.h>
 #define snprintf _snprintf
@@ -46,8 +47,10 @@
 #endif
 
 PGconn* conn;
-log4cplus::Logger Database::log = log4cplus::Logger::getInstance(
-    "renaissance.database");
+log4cplus::Logger Database::log()
+{
+	return log4cplus::Logger::getInstance("renaissance.database");
+}
 
 template<typename T>
 class DisableUpdates
@@ -145,7 +148,7 @@ int Database::loadSkillDefs()
     }
 
     int nSkills = PQntuples(skills);
-    LOG4CPLUS_INFO(Database::log,
+    LOG4CPLUS_INFO(Database::log(),
         "Fetched " << nSkills << " skills from the database.");
     for (int i = 0; i < nSkills; i++) {
         SkillInfo *si;
@@ -288,7 +291,7 @@ int Database::loadSkillDefs()
             lev = L_SHORT(PQgetvalue(skReq, i, 2));
         SkillInfo *si = SkillInfo::getById(id);
         if (!si || !SkillInfo::getById(req)) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Failed to load skill prerequisite for skill " << id << " because the skill wasn't found.");
         }
         else {
@@ -374,14 +377,14 @@ int Database::loadMaps(const char *mapDir)
 
     int nMaps = PQntuples(maps);
 
-    LOG4CPLUS_INFO(Database::log,
+    LOG4CPLUS_INFO(Database::log(),
         "Loaded " << nMaps << " maps from the database.");
 
     for (int i = 0; i < nMaps; i++) {
         unsigned int mapid = ntohl(
             *((unsigned int *) (PQgetvalue(maps, i, 0))));
         if (mapid > 0xFFFF) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Skipped map with id " << mapid << ", as max id is limited to 65535.");
             continue;
         }
@@ -399,14 +402,14 @@ int Database::loadMaps(const char *mapDir)
         walls.open(wallName, std::ios::in | std::ios::binary);
         data.open(fileName, std::ios::in | std::ios::binary);
         if (!walls.is_open() || !data.is_open()) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Couldn't open map files for map " << mapid << ".");
             continue;
         }
 
         struct stat st;
         if (stat(fileName, &st) == -1) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Couldn't open map files for map " << mapid << ".");
             continue;
         }
@@ -417,7 +420,7 @@ int Database::loadMaps(const char *mapDir)
             st.st_size);
 
         if (stat(wallName, &st) == -1) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Couldn't open map files for map " << mapid << ".");
             delete[] filedata;
             continue;
@@ -442,7 +445,7 @@ int Database::loadMaps(const char *mapDir)
 
     if (PQresultStatus(ports) != PGRES_TUPLES_OK) {
         PQclear(ports);
-        LOG4CPLUS_FATAL(Database::log, "Failed to load portals.");
+        LOG4CPLUS_FATAL(Database::log(), "Failed to load portals.");
         return -1;
     }
 
@@ -453,7 +456,7 @@ int Database::loadMaps(const char *mapDir)
         unsigned int mdst = ntohl(
             *((unsigned int *) (PQgetvalue(ports, i, 3))));
         if (msrc > 0xFFFF || mdst > 0xFFFF) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Failed to load a portal between maps " << msrc << " and " << mdst << " (mapid too large).");
             continue;
         }
@@ -468,7 +471,7 @@ int Database::loadMaps(const char *mapDir)
         Map *src = DataService::getService()->getMap(msrc);
         Map *dst = DataService::getService()->getMap(mdst);
         if (!src || !dst) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Couldn't load a portal because either the source " << msrc << " or dest " << mdst << " map was not loaded.");
         }
         Portal *p = src->addPortal(sx, sy, dx, dy, mdst);
@@ -506,7 +509,7 @@ Character *Database::loadCharacter(const char *charName)
 
     if (PQresultStatus(charTuple) != PGRES_TUPLES_OK) {
         PQclear(charTuple);
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to load character " << charName << ".");
         return 0;
     }
@@ -569,7 +572,7 @@ Character *Database::loadCharacter(const char *charName)
 
     Map *m = DataService::getService()->getMap(map);
     if (!m) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't load character " << charName << " because they were " << " on map " << map << ", which isn't loaded.");
         PQclear(charTuple);
         return 0;
@@ -583,7 +586,7 @@ Character *Database::loadCharacter(const char *charName)
     if (gid >= 0) {
         Guild *g = Guild::getById(gid);
         if (!g)
-            LOG4CPLUS_WARN(Database::log,
+            LOG4CPLUS_WARN(Database::log(),
                 "Failed to find guild with ID " << gid << " while loading a character.");
         else
             Guild::getById(gid)->addMember(res, (Guild::Rank) grank, false);
@@ -611,7 +614,7 @@ Character *Database::loadCharacter(const char *charName)
 
         if (PQresultStatus(trackers) != PGRES_TUPLES_OK) {
             PQclear(trackers);
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Failed to query character " << ntohl(id) << "'s quest trackers.");
             return 0;
         }
@@ -662,7 +665,7 @@ Character *Database::loadCharacter(const char *charName)
 
     if (PQresultStatus(legend) != PGRES_TUPLES_OK) {
         PQclear(legend);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to query character " << ntohl(id) << "'s legend.");
         return 0;
     }
@@ -686,7 +689,7 @@ Character *Database::loadCharacter(const char *charName)
             NULL, &cid, &sz, &type, 1);
     if (PQresultStatus(quests) != PGRES_TUPLES_OK) {
         PQclear(quests);
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to load quests for character " << charName << ".");
         return 0;
     }
@@ -715,7 +718,7 @@ void Database::loadLegends()
         NULL, 1);
 
     if (PQresultStatus(legends) != PGRES_TUPLES_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't load legend info from DB.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't load legend info from DB.");
         PQclear(legends);
         return;
     }
@@ -749,7 +752,7 @@ std::vector<std::pair<int, int> > Database::loadBanList()
         NULL, params, sz, types, 1);
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
         PQclear(result);
-        LOG4CPLUS_ERROR(Database::log, "Failed to load the ban list.");
+        LOG4CPLUS_ERROR(Database::log(), "Failed to load the ban list.");
         return std::vector<std::pair<int, int> >();
     }
 
@@ -777,7 +780,7 @@ void Database::banIp(int ipaddr, int expiry)
     PGresult *t = PQexecParams(conn, "DELETE FROM ip_banlist WHERE addr=$1", 1,
     NULL, params, sz, types, 1);
     if (PQresultStatus(t) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to clear an old ip banlist entry.");
     }
     PQclear(t);
@@ -786,7 +789,7 @@ void Database::banIp(int ipaddr, int expiry)
         2,
         NULL, params, sz, types, 1);
     if (PQresultStatus(t) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_WARN(Database::log, "Failed to add an ip banlist entry.");
+        LOG4CPLUS_WARN(Database::log(), "Failed to add an ip banlist entry.");
     }
     PQclear(t);
 }
@@ -839,7 +842,7 @@ int Database::createGuild(const char *name)
     NULL, 1);
 
     if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Created guild " << name << " but was unable to query its ID.");
         PQclear(result);
         return -1;
@@ -858,7 +861,7 @@ void Database::loadGuilds()
     NULL,
     NULL, 1);
     if (PQresultStatus(result) != PGRES_TUPLES_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Failed to load existing guilds.");
+        LOG4CPLUS_ERROR(Database::log(), "Failed to load existing guilds.");
         PQclear(result);
         return;
     }
@@ -878,7 +881,7 @@ void Database::loadGuilds()
             "SELECT name, guild_rank FROM characters WHERE guild_id=$1", 1,
             NULL, &param, &size, &type, 1);
         if (PQresultStatus(members) != PGRES_TUPLES_OK) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Failed to load members of existing guild " << gid << ".");
         }
         else {
@@ -911,7 +914,7 @@ void Database::addToGuild(int charId, int guildId, short rank)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(result) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to add character " << ntohl(charId) << " to guild " << ntohl(guildId) << ".");
     }
 
@@ -930,7 +933,7 @@ void Database::updateGuildRank(const char *name, short rank)
     NULL, params, sizes, types, 0);
 
     if (PQresultStatus(result) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to update character " << name << "'s guild rank.");
     }
 
@@ -948,7 +951,7 @@ void Database::removeFromGuild(const char *charName)
     NULL, 0);
 
     if (PQresultStatus(result) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to remove character " << charName << " from a guild.");
     }
 
@@ -965,7 +968,7 @@ void Database::deleteGuild(int guildId)
     NULL, params, sizes, types, 0);
 
     if (PQresultStatus(result) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to delete guild " << ntohl(guildId) << ".");
     }
 
@@ -1049,7 +1052,7 @@ void Database::delLegend(int id, const char *prefix)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(clearLegend) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to clear legend mark " << prefix << " from character " << ntohl(id) << ".");
     }
 
@@ -1131,7 +1134,7 @@ int Database::testPassword(const char *name, const char *pw)
 
     if (PQresultStatus(pwTuple) != PGRES_TUPLES_OK) {
         PQclear(pwTuple);
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Query failed while testing password for " << "character " << name << ".");
         return E_UNSPECIFIED;
     }
@@ -1257,7 +1260,7 @@ void Database::getItems(Character *c)
         NULL, &param, &size, &type, 1);
 
     if (PQresultStatus(storage) != PGRES_TUPLES_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to load storage for character " << c->getName() << ".");
         PQclear(storage);
         return;
@@ -1270,7 +1273,7 @@ void Database::getItems(Character *c)
 
         BaseItem *bi = BaseItem::getById(itemId);
         if (!bi) {
-            LOG4CPLUS_WARN(Database::log,
+            LOG4CPLUS_WARN(Database::log(),
                 "Character " << c->getName() << " is storing an item " << "with ID " << itemId << ", which doesn't exist.");
             continue;
         }
@@ -1286,7 +1289,7 @@ void Database::getItems(Character *c)
             NULL, &param, &size, &type, 1);
 
     if (PQresultStatus(overflow) != PGRES_TUPLES_OK) {
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Couldn't load accident storage for player " << c->getName() << ".");
         PQclear(overflow);
         return;
@@ -1322,7 +1325,7 @@ void Database::getItems(Character *c)
 
     if (PQresultStatus(overflow) != PGRES_COMMAND_OK) {
         fprintf(stderr, "Failed to delete some items from the overflow list\n");
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to delete some items from character " << ntohl(id) << "'s overflow list.");
         PQclear(overflow);
         return;
@@ -1355,7 +1358,7 @@ void Database::getItems(Character *c)
             NULL, params, sizes, types, 1);
 
     if (PQresultStatus(overflow) != PGRES_COMMAND_OK)
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to re-add an overflow item " << ntohl(itemId) << "(x" << ntohl(qty) << ", mod: " << ntohs(mod) << ") for character " << ntohl(id) << ".");
 
     PQclear(overflow);
@@ -1366,7 +1369,7 @@ void Database::getItems(Character *c)
         NULL, params, sizes, types, 1);
 
     if (PQresultStatus(overflow) != PGRES_COMMAND_OK)
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to mark temporary items as permanent " << "on character " << ntohl(id) << ".");
 
     PQclear(overflow);
@@ -1386,7 +1389,7 @@ void Database::getBuffs(Character *c)
         NULL, &param, &size, &type, 1);
     if (PQresultStatus(effects) != PGRES_TUPLES_OK) {
         PQclear(effects);
-        LOG4CPLUS_WARN(Database::log,
+        LOG4CPLUS_WARN(Database::log(),
             "Failed to query character " << ntohl(id) << "'s buffs.");
     }
 
@@ -1416,7 +1419,7 @@ void Database::loadMobs()
 
     if (PQresultStatus(mobs) != PGRES_TUPLES_OK) {
         PQclear(mobs);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't fetch mobs from the database.");
         return;
     }
@@ -1453,7 +1456,7 @@ void Database::loadMobs()
             "SELECT item_id,rate,mod FROM drops WHERE mob_id = $1", 1,
             NULL, param, &sz, &type, 1);
         if (PQresultStatus(drops) != PGRES_TUPLES_OK) {
-            LOG4CPLUS_WARN(Database::log,
+            LOG4CPLUS_WARN(Database::log(),
                 "Mob info identified by ID " << id << " not created " << "because drops couldn't be queried.");
             PQclear(drops);
             continue;
@@ -1481,7 +1484,7 @@ void Database::loadMobs()
             "SELECT skill_id, rate FROM mob_skill where mob_id=$1", 1,
             NULL, param, &sz, &type, 1);
         if (PQresultStatus(skills) != PGRES_TUPLES_OK) {
-            LOG4CPLUS_WARN(Database::log,
+            LOG4CPLUS_WARN(Database::log(),
                 "Mob info identified by ID " << id << " not created because skills couldn't be queried.");
             PQclear(skills);
             continue;
@@ -1517,13 +1520,13 @@ void Database::loadSpawners()
 
     if (PQresultStatus(spawners) != PGRES_TUPLES_OK) {
         PQclear(spawners);
-        LOG4CPLUS_FATAL(Database::log, "Couldn't query spawners.");
+        LOG4CPLUS_FATAL(Database::log(), "Couldn't query spawners.");
         return;
     }
 
     const int n = PQntuples(spawners);
     {
-        LOG4CPLUS_INFO(Database::log,
+        LOG4CPLUS_INFO(Database::log(),
             "Fetched " << n << " spawners from the database.");
     }
 
@@ -1535,7 +1538,7 @@ void Database::loadSpawners()
 
         Map *m = DataService::getService()->getMap(mapid);
         if (!m) {
-            LOG4CPLUS_ERROR(Database::log,
+            LOG4CPLUS_ERROR(Database::log(),
                 "Spawner assigned to map " << mapid << " not created " << "because the map is not loaded.");
         }
 
@@ -1562,7 +1565,7 @@ void loadEquip(unsigned int id)
 
     if (PQresultStatus(eqp) != PGRES_TUPLES_OK) {
         PQclear(eqp);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to load equipment item with ID " << id << ".");
         return;
     }
@@ -1623,7 +1626,7 @@ void loadItem(unsigned int id)
 
     if (PQresultStatus(item) != PGRES_TUPLES_OK) {
         PQclear(item);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to load item with " << "ID " << id << ".");
         return;
     }
@@ -1662,7 +1665,7 @@ void loadConsume(unsigned int id)
 
     if (PQresultStatus(item) != PGRES_TUPLES_OK) {
         PQclear(item);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to load consumable with ID " << id << ".");
         return;
     }
@@ -1701,13 +1704,13 @@ void Database::loadItems()
 
     if (PQresultStatus(items) != PGRES_TUPLES_OK) {
         PQclear(items);
-        LOG4CPLUS_FATAL(Database::log, "Couldn't query items.");
+        LOG4CPLUS_FATAL(Database::log(), "Couldn't query items.");
         return;
     }
 
     const int n = PQntuples(items);
     {
-        LOG4CPLUS_INFO(Database::log,
+        LOG4CPLUS_INFO(Database::log(),
             "Loaded " << n << " items from the database.");
     }
 

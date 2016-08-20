@@ -64,4 +64,8 @@ enum SessionError
 	E_UNSPECIFIED = 6
 };
 
+#ifdef WIN32
+#define __PRETTY_FUNCTION__ __func__
+#endif
+
 #endif /* DEFINES_H_ */

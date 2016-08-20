@@ -19,7 +19,7 @@ class CharacterList: public std::map<std::string, CharacterSession *>
 public:
     CharacterList(std::string dirPath);
     virtual ~CharacterList();bool makeCharacter(std::string name,
-        char const *pw, in_addr_t ipaddr);bool setAttributes(std::string name,
+        char const *pw, uint32_t ipaddr);bool setAttributes(std::string name,
         unsigned char hair, unsigned char haircolor, char gender);bool changePassword(
         std::string name, char const *pwOld, char const *pwNew);
     int prepareLogin(std::string name, char const *pw, unsigned int ip);
@@ -45,7 +45,7 @@ private:
 
     std::map<std::string, LoginWaiting> loginWaits;
     std::string characters;
-    std::map<in_addr_t, int> lastCreate;
+    std::map<uint32_t, int> lastCreate;
 };
 
 #endif /* CHARACTERLIST_H_ */

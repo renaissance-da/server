@@ -20,11 +20,12 @@
 #include "GroundItem.h"
 #include <list>
 #include "Trigger.h"
-#include <pthread.h>
+#include <mutex>
 #include <errno.h>
 #include <functional>
 #include "Timer.h"
 #include <queue>
+#include <chrono>
 
 class Map
 {
@@ -56,12 +57,12 @@ public:
     void addSpawner(Spawner *s);
 
     bool putItem(Item *item, unsigned short x, unsigned short y,
-        std::vector<unsigned int> *protection = 0, unsigned int protectionTime =
-            0);
+        std::vector<unsigned int> *protection = 0, 
+		std::chrono::seconds protectionTime = std::chrono::seconds(0));
 
     bool putGold(unsigned int amt, unsigned short x, unsigned short y,
-        std::vector<unsigned int> *protection = 0, unsigned int protectionTime =
-            0);
+        std::vector<unsigned int> *protection = 0, 
+		std::chrono::seconds protectionTime = std::chrono::seconds(0));
 
     Portal *addPortal(unsigned short x, unsigned short y, unsigned short xDest,
         unsigned short yDest, unsigned short dst);
@@ -88,9 +89,10 @@ public:
     Entity *getNearByOid(MapPoint *e, unsigned int oid, int dist = NEARBY);
     Entity *getEnt(MapPoint *e);
     void getEnts(const std::vector<MapPoint> &area,
-        std::vector<Entity *> &targets, Entity *exclusion = 0);bool hasPlayers()
+        std::vector<Entity *> &targets, Entity *exclusion = 0);
+	bool hasPlayers()
     {
-        return nPlayers;
+        return nPlayers != 0;
     }
 
     void addTrigger(Trigger *t);
@@ -138,19 +140,19 @@ public:
     }
     bool noSkills()
     {
-        return flags & MF_NO_SKILLS;
+        return (flags & MF_NO_SKILLS) == MF_NO_SKILLS;
     }
     bool noSecrets()
     {
-        return flags & MF_NO_SPELLS;
+        return (flags & MF_NO_SPELLS) == MF_NO_SPELLS;
     }
     bool noScrolls()
     {
-        return flags & MF_NO_SCROLLS;
+        return (flags & MF_NO_SCROLLS) == MF_NO_SCROLLS;
     }
     bool isInstance()
     {
-        return flags & MF_INSTANCE;
+        return (flags & MF_INSTANCE) == MF_INSTANCE;
     }
 
     const char *getName()
@@ -159,19 +161,6 @@ public:
     }
 
     void togglePvp();
-
-    //Debugging
-#ifndef NDEBUG
-    bool lockHeld()
-    {
-        int res = pthread_mutex_lock(&mapLock);
-        if (res == EDEADLK)
-            return true;
-        if (!res)
-            pthread_mutex_unlock(&mapLock);
-        return false;
-    }
-#endif
 
 protected:
 
@@ -197,7 +186,7 @@ protected:
     //TODO decide if this is permanent
     int nPlayers;
 
-    pthread_mutex_t mapLock;
+    std::mutex mapLock;
 
     static std::map<unsigned short, bool> doorList;
     unsigned flags;

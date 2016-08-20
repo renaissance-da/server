@@ -31,12 +31,7 @@
 
 DataService DataService::gleton;
 
-DataService::DataService():
-#ifndef NDEBUG
-onlineLock(PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP)
-#else
-onlineLock(PTHREAD_MUTEX_INITIALIZER)
-#endif
+DataService::DataService()
 {
 	characters = new CharacterList(std::string("characters/"));
 	infoTick = 0;
@@ -44,11 +39,9 @@ onlineLock(PTHREAD_MUTEX_INITIALIZER)
 
 DataService::~DataService() {
 	delete characters;
-
-	pthread_mutex_destroy(&onlineLock);
 }
 
-bool DataService::makeCharacter(std::string name, char const *pw, in_addr_t ipaddr)
+bool DataService::makeCharacter(std::string name, char const *pw, uint32_t ipaddr)
 {
 	lock();
 
@@ -205,15 +198,13 @@ int DataService::prepareLogin(std::string name, char const *pw, unsigned int ip)
 void DataService::lock()
 {
 	assert(LockSet::addLock(-2));
-	int r = pthread_mutex_lock(&onlineLock);
-	assert(!r);
+	onlineLock.lock();
 }
 
 void DataService::unlock()
 {
 	assert(LockSet::removeLock(-2));
-	int r = pthread_mutex_unlock(&onlineLock);
-	assert(!r);
+	onlineLock.unlock();
 }
 
 Character *DataService::getCharacter(std::string name, CharacterSession *who, unsigned int ip)

@@ -12,7 +12,6 @@
 #include "NPC.h"
 #include "DataService.h"
 #include "Map.h"
-#include <pthread.h>
 #include "ScriptTrigger.h"
 #include "random.h"
 #include "lower.h"
@@ -21,22 +20,24 @@
 #include "Mob.h"
 #include "MobInfo.h"
 #include "map_bindings.h"
+#include "defines.h"
+#include <mutex>
 
 #ifdef WIN32
 #define snprintf _snprintf
 #endif
 
 lua_State *L_scr = 0;
-pthread_mutex_t scriptLock = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+std::mutex scriptLock;
 
 void lockScripts()
 {
-	pthread_mutex_lock(&scriptLock);
+	scriptLock.lock();
 }
 
 void unlockScripts()
 {
-	pthread_mutex_unlock(&scriptLock);
+	scriptLock.unlock();
 }
 
 //Send a message to the player
@@ -84,7 +85,7 @@ void initDlg(Character *c, NPC *npc)
 	lua_pushlightuserdata(L_scr, (void *)c);
 	lua_pushlightuserdata(L_scr, (void *)npc);
 	if (lua_pcall(L_scr, 3, 0, 0) != 0) {
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::initDlg: "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::initDlg: "
 			    << lua_tostring(L_scr, -1));
 	    lua_pop(L_scr, 1);
 	}
@@ -100,7 +101,7 @@ void talkResponse(Character *c, NPC *npc, std::string &text)
 	lua_pushlightuserdata(L_scr, (void *)npc);
 	lua_pushstring(L_scr, text.c_str());
 	if (lua_pcall(L_scr, 4, 0, 0) != 0) {
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::talkResponse: "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::talkResponse: "
 			    << lua_tostring(L_scr, -1));
 	    lua_pop(L_scr, 1);
 	}
@@ -117,7 +118,7 @@ bool initScript(Character *c, ScriptTrigger *script)
 	bool err = lua_pcall(L_scr, 3, 1, 0);
 	if (err) {
 		unlockScripts();
-		LOG4CPLUS_ERROR(script::log, "Error in call to script::initScript: "
+		LOG4CPLUS_ERROR(script::log(), "Error in call to script::initScript: "
 				<< lua_tostring(L_scr, -1));
 		lua_pop(L_scr, 1);
 		return true; // remove
@@ -137,7 +138,7 @@ int scriptTimer(int timerId)
 	bool err = lua_pcall(L_scr, 1, 1, 0);
 	if (err) {
 		unlockScripts();
-		LOG4CPLUS_ERROR(script::log, "Error in call to script::scriptTimer: "
+		LOG4CPLUS_ERROR(script::log(), "Error in call to script::scriptTimer: "
 				<< lua_tostring(L_scr, -1));
 		lua_pop(L_scr, 1);
 		return 0;
@@ -161,7 +162,7 @@ bool initScript(Character *c, ScriptTrigger *script, Item *itm)
 	bool err = lua_pcall(L_scr, 4, 1, 0);
 	if (err) {
 		unlockScripts();
-		LOG4CPLUS_ERROR(script::log, "Error in call to script::initScript: "
+		LOG4CPLUS_ERROR(script::log(), "Error in call to script::initScript: "
 				<< lua_tostring(L_scr, -1));
 		lua_pop(L_scr, 1);
 		return true; // Delete this trigger
@@ -182,7 +183,7 @@ void resumeDlg(Character *c, Entity *e, unsigned short opt)
 	lua_pushlightuserdata(L_scr, (void *)e);
 	lua_pushnumber(L_scr, (double)opt);
 	if (lua_pcall(L_scr, 4, 0, 0) != 0) {
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::resumeDlg: "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::resumeDlg: "
 			    << lua_tostring(L_scr, -1));
 	    lua_pop(L_scr, 1);
 	}
@@ -198,7 +199,7 @@ void resumeDlg(Character *c, Entity *e, std::string &rep)
 	lua_pushlightuserdata(L_scr, (void *)e);
 	lua_pushstring(L_scr, rep.c_str());
 	if (lua_pcall(L_scr, 4, 0, 0) != 0) {
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::resumeDlg: "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::resumeDlg: "
 			    << lua_tostring(L_scr, -1));
 	    lua_pop(L_scr, 1);
 	}
@@ -249,7 +250,7 @@ void initScripts()
 	int err = luaL_dofile(L_scr, "npc/scripts.lua");
 	
 	if (err)
-	    LOG4CPLUS_ERROR(script::log, "Error while loading scripts.");
+	    LOG4CPLUS_ERROR(script::log(), "Error while loading scripts.");
 
 #ifdef WIN32
 	lua_getglobal(L_scr, "initNpcsDir");
@@ -282,7 +283,7 @@ int script::teleportInstance(lua_State *L)
 	Instance *i = g->getInstance(mapid, &isNew);
 
 	if (!DataService::getService()->tryChangeMap(c, i->getId(), x, y, 3)) {
-		LOG4CPLUS_WARN(script::log, "NPC teleportInstance failed to warp player "
+		LOG4CPLUS_WARN(script::log(), "NPC teleportInstance failed to warp player "
 			       << c->getName() << " to map " << mapid << ": " << x
 			       << " " << y << ".");
 	}
@@ -420,7 +421,7 @@ bool doSpell(Character *c, int spellId)
 	lua_pushnumber(L_scr, (double)spellId);
 	if (lua_pcall(L_scr, 3, 1, 0) != 0) {
 	    unlockScripts();
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::doSpell: "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::doSpell: "
 			    << lua_tostring(L_scr, -1));
 	    lua_pop(L_scr, 1);
 	    return false;
@@ -442,7 +443,7 @@ void script::recall(Character *c, int mapid, short x, short y)
 	lua_pushnumber(L_scr, (double)x);
 	lua_pushnumber(L_scr, (double)y);
 	if (lua_pcall(L_scr, 5, 0, 0) != 0) {
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::recall: "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::recall: "
 			    << lua_tostring(L_scr, -1));
 	    lua_pop(L_scr, 1);
 	}

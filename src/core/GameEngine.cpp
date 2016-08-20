@@ -24,6 +24,8 @@
 #include "StandardAI.h"
 #include "LuaAI.h"
 #include "core.h"
+#include <chrono>
+#include <thread>
 
 #include <log4cplus/logger.h>
 #include <log4cplus/loggingmacros.h>
@@ -42,17 +44,15 @@ GameEngine::GameEngine(DataService *s, drand48_data *rng) :
     service(s), rng(rng)
 {
     running = true;
-
     registerAI();
-
-    pthread_create(&thread, NULL, gameLoop, (void *) this);
+	thread = std::thread(gameLoop, this);
 }
 
 GameEngine::~GameEngine()
 {
     if (running) {
         running = false;
-        pthread_join(thread, NULL);
+		thread.join();
     }
     service->clearAll();
 
@@ -60,59 +60,32 @@ GameEngine::~GameEngine()
     SkillInfo::clear();
 }
 
-void *GameEngine::gameLoop(void *ge)
+void GameEngine::gameLoop(GameEngine *engine)
 {
-    GameEngine *engine = (GameEngine *) ge;
 
     rngInit(engine->rng);
 
+	auto sleep_interval = std::chrono::milliseconds(1000 / TICKS);
+
     while (engine->running) {
         //update all maps every sec
-#ifdef WIN32
-        LARGE_INTEGER f, t0, t1;
-        QueryPerformanceFrequency(&f);
-        QueryPerformanceCounter(&t0);
-#else
-        timeval t0, t1, delta;
-        gettimeofday(&t0, NULL);
-#endif
 
+		auto t0 = std::chrono::high_resolution_clock::now();
         engine->service->tick();
+		auto t1 = std::chrono::high_resolution_clock::now();
+		auto delta =
+			std::chrono::duration_cast<std::chrono::microseconds>(t1 - t0);
 
-#ifdef WIN32
-        QueryPerformanceCounter(&t1);
-        if (TICKS * (t1.QuadPart - t0.QuadPart) > f.QuadPart) {
-#else
-        gettimeofday(&t1, NULL);
-        timersub(&t1, &t0, &delta);
-        if (delta.tv_sec > 0 || delta.tv_usec > 1000000 / TICKS) {
-#endif
-            LOG4CPLUS_WARN(core::log,
-                "Game engine is behind! Loop took "
-#ifdef WIN32
-                << ((t1.QuadPart - t0.QuadPart) / f.QuadPart) << " seconds, " << (((t1.QuadPart - t0.QuadPart) * 1000000 / f.QuadPart) % 1000000) << " microseconds.");
-#else
-                << delta.tv_sec << " seconds, " << delta.tv_usec << " microseconds.");
-#endif
+		if (delta > std::chrono::milliseconds(1000000 / TICKS)) {
+
+			LOG4CPLUS_WARN(core::log(),
+				"Game engine is behind! Loop took " << delta.count() <<
+				" microseconds.");
         }
         else {
-#ifdef WIN32
-            Sleep(1000 / TICKS - (t1.QuadPart - t0.QuadPart) * 1000 / f.QuadPart);
-#else
-            timespec ts, tr;
-            ts.tv_sec = 0;
-            ts.tv_nsec = 999999999 / TICKS - (delta.tv_usec * 1000);
-            while (nanosleep(&ts, &tr) != 0) {
-                LOG4CPLUS_WARN(core::log,
-                    "Unexpected interruption occurred in GameEngine::gameLoop");
-                ts.tv_sec = tr.tv_sec;
-                ts.tv_nsec = tr.tv_nsec;
-            }
-#endif
+			std::this_thread::sleep_for(sleep_interval - delta);
         }
     }
-
-    return 0;
 }
 
 bool GameEngine::isRunning()

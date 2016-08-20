@@ -13,6 +13,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <thread>
 
 #ifdef WIN32
 #include <WinSock2.h>
@@ -20,7 +21,6 @@
 #else
 #include <netinet/in.h>
 #endif
-#include <pthread.h>
 #include <mutex>
 
 class BasicServer
@@ -38,16 +38,16 @@ public:
 
     virtual BasicSession *startSession(int sockfd, sockaddr_in *addr) = 0;
     void disconnect(BasicSession *s);
-    void addToBlacklist(in_addr_t ip_addr, int exp);
+    void addToBlacklist(uint32_t ip_addr, int exp);
 
 private:
     std::list<BasicSession *> clientList;
     int port, listenFd;
-    pthread_t listener;
+    std::thread listener;
     bool running;
-    static void *startService(void *srv);
+    static void startService(BasicServer *server);
     std::string name;
-    std::unordered_map<in_addr_t, int> blacklist;
+    std::unordered_map<uint32_t, int> blacklist;
     std::mutex bl_mutex;
 
 protected:

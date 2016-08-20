@@ -65,7 +65,7 @@ public:
 
     unsigned char getSlot()
     {
-        return baseEq->getSlot();
+        return (unsigned char)baseEq->getSlot();
     }
     bool allowsGender(char gender)
     {

@@ -7,7 +7,11 @@
 
 #include "LockSet.h"
 
-__thread std::set<int> *locks;
+#ifdef WIN32
+__declspec(thread) std::set<int> *locks = 0;
+#else
+__thread std::set<int> *locks = 0;
+#endif
 
 /**
  * Add the given lock ID to this thread's set of held locks.

@@ -15,7 +15,7 @@
 
 namespace script
 {
-    extern log4cplus::Logger log;
+    log4cplus::Logger log();
 }
 
 

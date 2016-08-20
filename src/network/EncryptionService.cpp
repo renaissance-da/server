@@ -14,7 +14,6 @@
 #include "defines.h"
 #include <assert.h>
 #include <fstream>
-#include <arpa/inet.h>
 
 char **loadTables()
 {

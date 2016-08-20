@@ -26,18 +26,13 @@
 #define snprintf _snprintf
 #endif
 
-CharacterSession::CharacterSession(int sockfd, in_addr_t ip, int now):
+CharacterSession::CharacterSession(int sockfd, uint32_t ip, int now):
 BasicSession(sockfd, now, ip),
 service(0),
 character(0),
 moveOrdinal(0),
 curBgm(1),
-bgmPlayerSet(false),
-#ifndef NDEBUG
-writelock(PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP)
-#else
-writelock(PTHREAD_MUTEX_INITIALIZER)
-#endif
+bgmPlayerSet(false)
 {
 	ordinal = 0;
 	//Wait for data to arrive from client
@@ -49,7 +44,6 @@ CharacterSession::~CharacterSession() {
 		DataService::getService()->freeCharacter(character);
 		delete service;
 	}
-	pthread_mutex_destroy(&writelock);
 }
 
 void CharacterSession::sendPacket(DAPacket *p)
@@ -75,14 +69,12 @@ void CharacterSession::disconnect()
 
 void CharacterSession::lock()
 {
-	int r = pthread_mutex_lock(&writelock);
-	assert(!r);
+	writelock.lock();
 }
 
 void CharacterSession::unlock()
 {
-	int r = pthread_mutex_unlock(&writelock);
-	assert(!r);
+	writelock.unlock();
 }
 
 void CharacterSession::aboutToTimeout()
@@ -697,7 +689,7 @@ void CharacterSession::talk(DAPacket *p)
 			alert.appendString(len, display);
 
 			DataService::getService()->sendToAll(&alert, Character::Settings::LISTEN_TO_SHOUT);
-			LOG4CPLUS_INFO(core::log, display);
+			LOG4CPLUS_INFO(core::log(), display);
 		}
 		else if (domain == 0) {
 			LockedChar lc = character;

@@ -12,13 +12,12 @@
 #include "CharacterList.h"
 #include <map>
 #include "Map.h"
-#include <pthread.h>
 #include "DAPacket.h"
 #include "Guild.h"
 #include <mutex>
 
 //TODO this should go in a module for managing server instances
-void addToBlacklists(in_addr_t ip_addr, int exp);
+void addToBlacklists(uint32_t ip_addr, int exp);
 
 class DataService {
 public:
@@ -29,7 +28,7 @@ public:
 
 	void addMap(Map *m, unsigned short id) { maps[id] = m; }
 
-	bool makeCharacter(std::string name, char const *pw, in_addr_t ipaddr);
+	bool makeCharacter(std::string name, char const *pw, uint32_t ipaddr);
 	bool setAttributes(std::string name, unsigned char hair, unsigned char hairColor, char gender);
 	bool changePassword(std::string name, char const *pwOld, char const *pwNew);
 	int prepareLogin(std::string name, char const *pw, unsigned int ip);
@@ -94,8 +93,7 @@ private:
 	static DataService gleton;
 
 	CharacterList *characters;
-	pthread_mutex_t onlineLock;
-	std::mutex groupsLock;
+	std::mutex onlineLock, groupsLock;
 	typedef std::lock_guard<std::mutex> guard_t;
 
 	std::map<unsigned short, Map *> maps;

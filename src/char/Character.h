@@ -476,7 +476,7 @@ public:
         return trackers;
     }
 
-    static log4cplus::Logger log;
+    static log4cplus::Logger log();
 
 private:
 

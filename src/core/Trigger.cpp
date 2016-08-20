@@ -20,7 +20,7 @@ Trigger::~Trigger()
 
 void Trigger::getViewedBlock(IDataStream *d)
 {
-    LOG4CPLUS_WARN(core::log, "getViewedBlock called on a trigger object.");
+    LOG4CPLUS_WARN(core::log(), "getViewedBlock called on a trigger object.");
 }
 
 short Trigger::getHideLevel()

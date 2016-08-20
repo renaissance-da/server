@@ -24,6 +24,7 @@
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
+#include "log4cplus/initializer.h"
 #include "LoginSession.h"
 
 #ifdef WIN32
@@ -52,7 +53,7 @@ void interrupted(int sig)
 }
 #endif
 
-void addToBlacklists(in_addr_t ip_addr, int exp)
+void addToBlacklists(uint32_t ip_addr, int exp)
 {
 	charServer->addToBlacklist(ip_addr, exp);
 	loginServer->addToBlacklist(ip_addr, exp);
@@ -60,6 +61,8 @@ void addToBlacklists(in_addr_t ip_addr, int exp)
 
 int main()
 {
+	log4cplus::Initializer initializer;
+
 	using namespace Database;
 	drand48_data loginSrvRng, dataSrvRng, gameEngRng;
 	time_t tp;

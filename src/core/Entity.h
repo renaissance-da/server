@@ -112,14 +112,15 @@ public:
         return 0;
     }
     virtual StatusEffect *addStatusEffect(int seid);
-    virtual StatusEffect *addStatusEffect(int seid, int dur);bool doomed()
+    virtual StatusEffect *addStatusEffect(int seid, int dur);
+	bool doomed()
     {
-        return effects[StatusEffect::DOOM];
+        return effects[StatusEffect::DOOM] != nullptr;
     }
     bool hasEffect(StatusEffect::Kind k)
     {
         assert(k < StatusEffect::SE_KINDS);
-        return effects[k];
+        return effects[k] != nullptr;
     }
     virtual bool isSmall()
     {

@@ -26,7 +26,7 @@ public:
 	Mob(unsigned short x, unsigned short y, Map *map, unsigned short apr, int id, unsigned int hp=50,
 			unsigned int min=4, unsigned short max=6, unsigned int exp=100, std::string name="Bob Marley",
 			unsigned short mode=0, unsigned short lev=0, Element atk=None, Element def=None,
-			short ac=100, short power=0, short mr=0, short dex=0, bool small=true, unsigned short regen=0,
+			short ac=100, short power=0, short mr=0, short dex=0, bool isSmall=true, unsigned short regen=0,
 			short submode=2);
 	virtual ~Mob();
 
@@ -53,7 +53,7 @@ public:
 
 	Element getAtkEle() { return a; }
 	Element getDefEle();
-	bool isSmall() { return small; }
+	bool isSmall() { return small_; }
 
 	friend class MobAI;
 	MobAI *getAI() { return ai; }
@@ -66,7 +66,7 @@ private:
 	Skill mobAssail;
 	MobWatcher *spawner;
 	Element a, d;
-	bool small;
+	bool small_;
 
 	std::vector<Item *> items;
 	std::vector<std::pair<Skill, short> > skills;

@@ -147,7 +147,7 @@ int script::setMaster(lua_State *L)
 int script::addMaxHp(lua_State *L)
 {
 	if (lua_gettop(L) < 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = (Character *)lua_touserdata(L, 1);
 	int amt = lua_tonumber(L, 2);
@@ -175,7 +175,7 @@ int script::rededicate(lua_State *L)
 	if (!c)
 		return 0;
 
-	Path p = (Path)lua_tonumber(L, 2);
+	Path p = (Path)((int)lua_tonumber(L, 2));
 	c->rededicate(p);
 
 	return 0;
@@ -194,7 +194,7 @@ int script::curWeight(lua_State *L)
 int script::incStat(lua_State *L)
 {
 	if (lua_gettop(L) < 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = luaGetCharacter(L);
 	if (!c)
@@ -255,7 +255,7 @@ int script::incStat(lua_State *L)
 int script::forgetSkill(lua_State *L)
 {
 	if (lua_gettop(L) < 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = luaGetCharacter(L);
 	if (!c)
@@ -276,7 +276,7 @@ int script::getPath(lua_State *L)
 	int n = lua_gettop(L);
 
 	if (n < 1)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	assert(lua_type(L,1) == LUA_TLIGHTUSERDATA);
 	Character *c = (Character *)lua_touserdata(L, 1);
@@ -288,7 +288,7 @@ int script::getPath(lua_State *L)
 int script::getGender(lua_State *L)
 {
 	if (lua_gettop(L) != 1)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = (Character *)lua_touserdata(L, 1);
 	lua_pushstring(L, c->getGender());
@@ -299,7 +299,7 @@ int script::isDead(lua_State *L)
 {
 	const int n = lua_gettop(L);
 	if (n != 1)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = (Character *)lua_touserdata(L, 1);
 	lua_pushboolean(L, c->isDead());
@@ -336,7 +336,7 @@ int script::getQuestTimer(lua_State *L)
 {
 	const int n = lua_gettop(L);
 	if (n != 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = (Character *)lua_touserdata(L, 1);
 	int questId = (int)lua_tonumber(L, 2);
@@ -349,12 +349,12 @@ int script::getEquip(lua_State *L)
 {
 	const int n = lua_gettop(L);
 	if (n < 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = (Character *)lua_touserdata(L, 1);
 	int slot = (int)lua_tonumber(L, 2);
 	if (slot > NUM_EQUIPS) {
-		return luaL_error(L, "Invalid equipment slot %d passed in call to %s.", slot, __PRETTY_FUNCTION__);
+		return luaL_error(L, "Invalid equipment slot %d passed in call to %s.", slot, __func__);
 	}
 	if (c->getEquipment()[slot]) {
 		lua_pushnumber(L, c->getEquipment()[slot]->getId());
@@ -367,7 +367,7 @@ int script::countItems(lua_State *L)
 {
 	const int n = lua_gettop(L);
 	if (n < 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = (Character *)lua_touserdata(L, 1);
 	unsigned short slot = (unsigned short)(lua_tonumber(L, 2));
@@ -380,7 +380,7 @@ int script::countKills(lua_State *L)
 {
 	const int n = lua_gettop(L);
 	if (n < 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	Character *c = (Character *)lua_touserdata(L, 1);
 	int trackerId = (int)lua_tonumber(L, 2);
@@ -400,7 +400,7 @@ int script::setPath(lua_State *L)
 	int n = lua_gettop(L);
 
 	if (n < 2)
-	    return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 
 	assert(lua_type(L,1) == LUA_TLIGHTUSERDATA);
 	Character *c = (Character *)lua_touserdata(L, 1);
@@ -417,7 +417,7 @@ int script::countItemId(lua_State *L)
 	const int n = lua_gettop(L);
 
 	if (n < 2) {
-		return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+		return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 	}
 
 	assert(lua_type(L, 1) == LUA_TLIGHTUSERDATA);
@@ -437,7 +437,7 @@ int script::maxStack(lua_State *L)
 {
 	int n = lua_gettop(L);
 	if (n < 2) {
-		return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+		return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 	}
 
 	Character *c = (Character *)lua_touserdata(L, 1);
@@ -445,7 +445,7 @@ int script::maxStack(lua_State *L)
 
 	BaseItem *bi = BaseItem::getById(itemId);
 	if (!bi) {
-	    return luaL_error(L, "Invalid item ID (%d) passed to %s.", itemId, __PRETTY_FUNCTION__);
+	    return luaL_error(L, "Invalid item ID (%d) passed to %s.", itemId, __func__);
 	}
 
 	unsigned short max = bi->getMaxStack();
@@ -510,7 +510,7 @@ int script::giveExp(lua_State *L)
 int script::takeExp(lua_State *L)
 {
 	if (lua_gettop(L) != 2) {
-		return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+		return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 	}
 
 	Character *c = (Character *)lua_touserdata(L, 1);
@@ -525,7 +525,7 @@ int script::addTracker(lua_State *L)
 	const int n = lua_gettop(L);
 
 	if (n < 3) {
-		return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+		return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 	}
 	Character *c = (Character *)lua_touserdata(L, 1);
 	int trackerId = (int)lua_tonumber(L, 2);
@@ -542,7 +542,7 @@ int script::addTracker(lua_State *L)
 int script::delTracker(lua_State *L)
 {
 	if (lua_gettop(L) < 2) {
-		return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+		return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 	}
 
 	Character *c = (Character *)lua_touserdata(L, 1);
@@ -603,7 +603,7 @@ int script::teleport(lua_State *L)
 	short y = (short)lua_tonumber(L, 4);
 
 	if (!DataService::getService()->tryChangeMap(c, map, x, y, 3)) {
-		LOG4CPLUS_WARN(script::log, "NPC teleport faild to warp player "
+		LOG4CPLUS_WARN(script::log(), "NPC teleport faild to warp player "
 			       << c->getName() << " to map " << map << ": "
 			       << x << " " << y << ".");
 	}
@@ -773,7 +773,7 @@ int script::giveItem(lua_State *L)
 		if (itm->getType() == BaseItem::EQUIP)
 			((Equipment *)itm)->setMod(mod);
 		else
-		    LOG4CPLUS_WARN(script::log, "A script tried to set a modifier on a non-equipment item.");
+		    LOG4CPLUS_WARN(script::log(), "A script tried to set a modifier on a non-equipment item.");
 	}
 
 	bool success = c->getItem(itm);
@@ -828,7 +828,7 @@ int script::getItemName(lua_State *L)
 {
 	const int n = lua_gettop(L);
 	if (n < 2) {
-		return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+		return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 	}
 
 	Character *c = (Character *)lua_touserdata(L, 1);
@@ -912,7 +912,7 @@ int script::repair(lua_State *L)
 {
 	const int n = lua_gettop(L);
 	if (n < 2) {
-		return luaL_error(L, "Insufficient arguments given in call to %s.", __PRETTY_FUNCTION__);
+		return luaL_error(L, "Insufficient arguments given in call to %s.", __func__);
 	}
 
 	Character *c = (Character *)lua_touserdata(L, 1);
@@ -1297,7 +1297,7 @@ int script::storageInfo(lua_State *L)
 	for (int i = 0; i < storage.size(); i++) {
 		BaseItem *bi = BaseItem::getById(storage[i].id);
 		if (!bi) {
-			LOG4CPLUS_ERROR(script::log, "Character " << c->getName() << " is storing item with ID " << storage[i].id
+			LOG4CPLUS_ERROR(script::log(), "Character " << c->getName() << " is storing item with ID " << storage[i].id
 					<< ", which doesn't identify an item!\n");
 			continue;
 		}

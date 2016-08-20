@@ -129,7 +129,7 @@ void script::act(lua_State *L, std::vector<Entity *> &nearby, std::vector<Entity
 	}
 
 	if (lua_pcall(L, 2, 0, 0) != 0) {
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::act: "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::act: "
 			    << lua_tostring(L, -1));
 	    lua_pop(L, 1);
 	}
@@ -147,14 +147,14 @@ lua_State *script::newLuaAI(int submode, Mob *m)
 	int err = luaL_dofile(L, "script/mob.lua");
 
 	if (err)
-	    LOG4CPLUS_ERROR(script::log, "Error while loading mob.lua\n");
+	    LOG4CPLUS_ERROR(script::log(), "Error while loading mob.lua\n");
 
 	lua_getglobal(L, "initMobAI");
 	lua_pushnumber(L, (double)submode);
 	lua_pushlightuserdata(L, (void *)m);
 
 	if (lua_pcall(L, 2, 0, 0) != 0) {
-	    LOG4CPLUS_ERROR(script::log, "Error in call to script::newLuaAI, with "
+	    LOG4CPLUS_ERROR(script::log(), "Error in call to script::newLuaAI, with "
 			    << "submode " << submode << ": " << lua_tostring(L, -1));
 	    lua_pop(L, 1);
 	}

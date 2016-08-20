@@ -20,8 +20,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-log4cplus::Logger LoginSession::log = log4cplus::Logger::getInstance(
-    "renaissance.login");
+log4cplus::Logger LoginSession::log()
+{
+	return log4cplus::Logger::getInstance("renaissance.login");
+}
 
 const unsigned char *srvNamelist;
 int slistCrc = 0;
@@ -44,7 +46,7 @@ void LoginSession::initMessages()
     unsigned char *sname = new unsigned char[1024];
     slistLen = compress(data, sname, sizeof(data), 1024);
     if (slistLen < 0) {
-	LOG4CPLUS_FATAL(log, "Failed to compress server list information.");
+	LOG4CPLUS_FATAL(log(), "Failed to compress server list information.");
 	abort();
     }
     srvNamelist = sname;
@@ -53,17 +55,17 @@ void LoginSession::initMessages()
     std::fstream motd_file;
     motd_file.open(motd_filename, std::ios::in | std::ios::binary);
     if (!motd_file.is_open()) {
-	LOG4CPLUS_FATAL(log, "Failed to load message of the day.");
+	LOG4CPLUS_FATAL(log(), "Failed to load message of the day.");
 	abort();
     }
     struct stat st;
     if (stat(motd_filename, &st) == -1) {
-	LOG4CPLUS_FATAL(log, "Couldn't stat motd file.");
+	LOG4CPLUS_FATAL(log(), "Couldn't stat motd file.");
 	abort();
     }
     char *motdUncompressed = new char[st.st_size];
     motd_file.read(motdUncompressed, st.st_size);
-    motdLen = std::max((off_t)1024, st.st_size);
+    motdLen = (std::max)((off_t)1024, st.st_size);
     ::motd = new char[motdLen];
 
     motdLen = compress((unsigned char *)motdUncompressed,
@@ -73,10 +75,10 @@ void LoginSession::initMessages()
     delete[] motdUncompressed;
 }
 
-LoginSession::LoginSession(int fd, in_addr_t ip, int now) :
+LoginSession::LoginSession(int fd, uint32_t ip, int now):
     BasicSession(fd, now, ip), service(new EncryptionService()), ordinal(0)
 {
-    LOG4CPLUS_TRACE(log, "Accepted connection from " << getIpString());
+    LOG4CPLUS_TRACE(log(), "Accepted connection from " << getIpString());
     // Send welcome message
     char data[] = { 0x1b, 'C', 'O', 'N', 'N', 'E', 'C', 'T', 'E', 'D', ' ', 'S',
         'E', 'R', 'V', 'E', 'R', 0x0a };
@@ -98,7 +100,7 @@ void LoginSession::dataReady()
         p = new DAPacket(fd);
     }
     catch (DAPacket::PacketError &pe) {
-        LOG4CPLUS_TRACE(log, "Packet error while reading from client "
+        LOG4CPLUS_TRACE(log(), "Packet error while reading from client "
 			<< getIpString());
         open = false;
         return;
@@ -152,13 +154,13 @@ void LoginSession::dataReady()
 
     catch (DAPacket::PacketError &pe) {
         // Something went wrong while reading a packet!
-        LOG4CPLUS_TRACE(log, "Packet error while reading from client "
+        LOG4CPLUS_TRACE(log(), "Packet error while reading from client "
 			<< getIpString());
         open = false;
     }
     catch (SessionError &se) {
         //tried to encrypt/decrypt something without using keytable, probably a bad packet code
-        LOG4CPLUS_TRACE(log, "Encryption error while reading from client "
+        LOG4CPLUS_TRACE(log(), "Encryption error while reading from client "
 			<< getIpString());
         open = false;
     }
@@ -280,7 +282,7 @@ void LoginSession::createCharacter(DAPacket *p)
     }
     else {
         //Character file created
-        LOG4CPLUS_INFO(log, "Character " << name << " created by client "
+        LOG4CPLUS_INFO(log(), "Character " << name << " created by client "
 		       << getIpString());
         editName = name;
         unsigned char ret[5] = { ordinal++, 0, 0, 0, 0 };
@@ -323,7 +325,7 @@ void LoginSession::changePassword(DAPacket *p)
 
     if (DataService::getService()->changePassword(name, oldPw.c_str(),
         newPw.c_str())) {
-        LOG4CPLUS_TRACE(log, "Password change accepted for character "
+        LOG4CPLUS_TRACE(log(), "Password change accepted for character "
 			<< name << ", requested by client "
 			<< getIpString());
         //Success
@@ -333,7 +335,7 @@ void LoginSession::changePassword(DAPacket *p)
         reply.writeData(fd);
     }
     else {
-        LOG4CPLUS_TRACE(log, "Password change rejected for character "
+        LOG4CPLUS_TRACE(log(), "Password change rejected for character "
 			<< name << ", requested by client "
 			<< getIpString());
         unsigned char retData[] = { ordinal++, 0xf };
@@ -357,7 +359,7 @@ void LoginSession::login(DAPacket *p)
 
     if (!(err = DataService::getService()->prepareLogin(name, pw.c_str(),
         clientIp))) {
-	LOG4CPLUS_INFO(log, "Accepted login request for character "
+	LOG4CPLUS_INFO(log(), "Accepted login request for character "
 		       << name << ", from client " << getIpString());
         unsigned char retData[4] = { ordinal++, 0, 0, 0 };
         DAPacket replyOne(Server::SERVER_MESSAGE, (char *) retData, 4);
@@ -376,7 +378,7 @@ void LoginSession::login(DAPacket *p)
         replyTwo.writeData(fd);
     }
     else {
-	LOG4CPLUS_INFO(log, "Failed login attempt for character " <<
+	LOG4CPLUS_INFO(log(), "Failed login attempt for character " <<
 		       name << ", requested by client " << getIpString());
         unsigned char failed[] = { ordinal++, 0xf };
         DAPacket reply(Server::SERVER_MESSAGE, (char *) failed, 2);

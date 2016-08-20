@@ -13,6 +13,10 @@
 #include "types.h"
 #include "network.h"
 
+#ifdef WIN32
+#define close closesocket
+#endif
+
 #define MAX(X,Y) ((X) > (Y) ? (X) : (Y))
 
 // Create a server which will use a separate thread to listen on the port given
@@ -25,18 +29,16 @@ BasicServer::BasicServer(drand48_data *rngData, int port, char const *name,
         blacklist[p.first] = p.second;
     }
 
-    int result = pthread_create(&listener, 0, startService, (void *) this);
-    if (result)
-        running = false;
+	listener = std::thread(startService, this);
+	running = listener.joinable();
 }
 
 void BasicServer::restart()
 {
     stop();
     running = true;
-    int result = pthread_create(&listener, 0, startService, (void *) this);
-    if (result)
-        running = false;
+	listener = std::thread(startService, this);
+	running = listener.joinable();
 }
 
 BasicServer::~BasicServer()
@@ -51,7 +53,7 @@ void BasicServer::stop()
 {
     if (running) {
         running = false;
-        pthread_join(listener, NULL);
+		listener.join();
         Socket::s_close(listenFd);
     }
     while (!clientList.empty()) {
@@ -61,9 +63,8 @@ void BasicServer::stop()
     }
 }
 
-void *BasicServer::startService(void *srv)
+void BasicServer::startService(BasicServer *server)
 {
-    BasicServer *server = (BasicServer *) srv;
     using std::list;
 
     rngInit(server->rng);
@@ -84,17 +85,17 @@ void *BasicServer::startService(void *srv)
     if (server->listenFd == -1) {
 #endif
         server->running = false;
-        pthread_exit((void *) 1);
+		return;
     }
     if (bind(server->listenFd, (sockaddr *) &addr, sizeof(addr)) == -1) {
         server->running = false;
         Socket::s_close(server->listenFd);
-        pthread_exit((void *) 2);
+		return;
     }
     if (listen(server->listenFd, 100) == -1) {
         server->running = false;
         Socket::s_close(server->listenFd);
-        pthread_exit((void *) 3);
+		return;
     }
 
     maxFd = server->listenFd;
@@ -150,7 +151,6 @@ void *BasicServer::startService(void *srv)
         }
     }
 
-    return 0;
 }
 
 std::string BasicServer::statusText()
@@ -181,7 +181,7 @@ void BasicServer::disconnect(BasicSession *s)
  * accepted from that ip address.
  * \param[in] ip_addr The address to blacklist.
  */
-void BasicServer::addToBlacklist(in_addr_t ip_addr, int exp)
+void BasicServer::addToBlacklist(uint32_t ip_addr, int exp)
 {
     std::lock_guard<std::mutex> lg(bl_mutex);
     blacklist[ip_addr] = exp;

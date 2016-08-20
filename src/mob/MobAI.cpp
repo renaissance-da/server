@@ -198,14 +198,14 @@ void MobAI::addMinion(Mob *m)
  * \param[in] aggressive True if this mob will attack players preemptively
  * \return The preferred target of this AI
  */
-Entity *MobAI::selectTarget(std::vector<Entity *> &near, bool aggressive)
+Entity *MobAI::selectTarget(std::vector<Entity *> &nearby, bool aggressive)
 {
-	if (near.empty())
+	if (nearby.empty())
 		return 0;
 
 	Entity *secondary = 0;
 	for (Attacker &a : atkList) {
-		for (Entity *e : near) {
+		for (Entity *e : nearby) {
 			if (a.who == e->getOid()) {
 				//Check if this target is good - if its a player it must be alive and well
 				if (e->getType() == Entity::E_CHARACTER) {
@@ -231,7 +231,7 @@ Entity *MobAI::selectTarget(std::vector<Entity *> &near, bool aggressive)
 	//found no one, if hostile grab worst ac character
 	if (aggressive) {
 		short worstAc = 0x8000; //negative
-		for (Entity *e : near) {
+		for (Entity *e : nearby) {
 			if (e->getType() == Entity::E_CHARACTER) {
 				Character *c = (Character *)e;
 				if (c->getStats()->getAc() > worstAc && !c->isDead() &&

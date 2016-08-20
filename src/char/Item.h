@@ -54,7 +54,7 @@ public:
     }
     unsigned char getMaxQty()
     {
-        return base->getMaxStack();
+        return (unsigned char)base->getMaxStack();
     }
     const char *getName();
     unsigned short getNameLen();

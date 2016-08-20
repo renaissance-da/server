@@ -16,6 +16,7 @@
 
 #ifdef WIN32
 #include <WinSock2.h>
+#define HAVE_STRUCT_TIMESPEC
 #include <libpq-fe.h>
 #include <Windows.h>
 #define snprintf _snprintf
@@ -54,7 +55,7 @@ void updateChars(PGconn *conn, std::vector<Database::CharStats> &chars)
     //Truncate update table
     PGresult *r = PQexec(conn, "TRUNCATE TABLE update_character");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character data.");
         PQclear(r);
         return;
@@ -63,7 +64,7 @@ void updateChars(PGconn *conn, std::vector<Database::CharStats> &chars)
 
     r = PQexec(conn, "COPY update_character FROM STDIN");
     if (PQresultStatus(r) != PGRES_COPY_IN) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character data.");
         PQclear(r);
         return;
@@ -86,7 +87,7 @@ void updateChars(PGconn *conn, std::vector<Database::CharStats> &chars)
         "FROM update_character new "
         "WHERE old.id=new.id");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to finish copy operation for updating character data.");
         PQclear(r);
         return;
@@ -100,7 +101,7 @@ void insertItems(PGconn *conn, std::vector<Database::InsertEquip> &items)
         PQexec(conn,
             "COPY has_item (char_id, item_id, slot, qty, dur, mod, identified) FROM STDIN");
     if (PQresultStatus(r) != PGRES_COPY_IN) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character equipment.");
         PQclear(r);
         return;
@@ -115,7 +116,7 @@ void insertEffects(PGconn *conn, std::vector<Database::Effect> &effects)
     PGresult *r = PQexec(conn,
         "COPY has_effect (char_id, buff_id, duration) FROM STDIN");
     if (PQresultStatus(r) != PGRES_COPY_IN) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character effects.");
         PQclear(r);
         return;
@@ -130,7 +131,7 @@ void updateSkills(PGconn *conn, std::vector<Database::UpdateSkill> &skills)
     //Truncate update table
     PGresult *r = PQexec(conn, "TRUNCATE update_skill");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character skills.");
         PQclear(r);
         return;
@@ -139,7 +140,7 @@ void updateSkills(PGconn *conn, std::vector<Database::UpdateSkill> &skills)
 
     r = PQexec(conn, "COPY update_skill FROM STDIN");
     if (PQresultStatus(r) != PGRES_COPY_IN) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character skills.");
         PQclear(r);
         return;
@@ -153,7 +154,7 @@ void updateSkills(PGconn *conn, std::vector<Database::UpdateSkill> &skills)
         "FROM update_skill new "
         "WHERE old.char_id=new.char_id AND old.slot=new.slot");
     if (PQresultStatus(r) != PGRES_COMMAND_OK)
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to finish copy operation for updating character skills.");
     PQclear(r);
 }
@@ -163,7 +164,7 @@ void updateSecrets(PGconn *conn, std::vector<Database::UpdateSkill> &secrets)
     //Truncate update table
     PGresult *r = PQexec(conn, "TRUNCATE update_secret");
     if (PQresultStatus(r) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character secrets.");
         PQclear(r);
         return;
@@ -172,7 +173,7 @@ void updateSecrets(PGconn *conn, std::vector<Database::UpdateSkill> &secrets)
 
     r = PQexec(conn, "COPY update_secret FROM STDIN");
     if (PQresultStatus(r) != PGRES_COPY_IN) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character secrets.");
         PQclear(r);
         return;
@@ -186,7 +187,7 @@ void updateSecrets(PGconn *conn, std::vector<Database::UpdateSkill> &secrets)
         "FROM update_secret new "
         "WHERE old.char_id=new.char_id AND old.slot=new.slot");
     if (PQresultStatus(r) != PGRES_COMMAND_OK)
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to finish copy operation for updating character secrets.");
     PQclear(r);
 }
@@ -198,7 +199,7 @@ void insertAccidentItems(PGconn *conn,
         PQexec(conn,
             "COPY accident_item (char_id, item_id, qty, dur, mod, temp) FROM STDIN");
     if (PQresultStatus(r) != PGRES_COPY_IN) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character temporary items.");
         PQclear(r);
         return;
@@ -213,7 +214,7 @@ void insertTrackers(PGconn *conn, std::vector<Database::TrackerEntry> &trackers)
     PGresult *r = PQexec(conn,
         "COPY trackers (char_id, quest_id, mob_id, qty) FROM STDIN");
     if (PQresultStatus(r) != PGRES_COPY_IN) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Failed to start copy operation for updating character trackers.");
         PQclear(r);
         return;
@@ -249,13 +250,19 @@ CharManager::CharManager(const char *connParams)
 
     conn = PQconnectdb(connParams);
     bgconn = PQconnectdb(connParams);
-    canJoin = false;
-    worker = pthread_self();
+
+	if (PQstatus(conn) != CONNECTION_OK || PQstatus(bgconn) != CONNECTION_OK) {
+		if (PQstatus(conn) != CONNECTION_OK)
+			LOG4CPLUS_FATAL(Database::log(), "Failed to connect to DB:" << PQerrorMessage(conn));
+		else
+			LOG4CPLUS_FATAL(Database::log(), "Failed to connect to DB:" << PQerrorMessage(bgconn));
+		assert(false);
+	}
 
     //Open new transaction
     PGresult *b = PQexec(conn, "BEGIN");
     if (PQresultStatus(b) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_FATAL(Database::log, "Failed to restart batch save.");
+        LOG4CPLUS_FATAL(Database::log(), "Failed to restart batch save.");
         assert(false);
     }
     PQclear(b);
@@ -266,7 +273,7 @@ CharManager::~CharManager()
     //rollback, alternatively we could finish if we could save all chars
     PGresult *b = PQexec(conn, "ROLLBACK");
     if (PQresultStatus(b) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_FATAL(Database::log, "Failed to rollback last transaction.");
+        LOG4CPLUS_FATAL(Database::log(), "Failed to rollback last transaction.");
         PQclear(b);
         assert(false);
         return;
@@ -279,13 +286,11 @@ CharManager::~CharManager()
     }
 
     //Join last save operation
-    //if (worker.joinable()) {
-    if (canJoin) {
-        LOG4CPLUS_INFO(Database::log,
+    if (worker.joinable()) {
+        LOG4CPLUS_INFO(Database::log(),
             "Waiting for last transaction to terminate.");
-        //worker.join();
-        pthread_join(worker, NULL);
-        LOG4CPLUS_INFO(Database::log,
+        worker.join();
+        LOG4CPLUS_INFO(Database::log(),
             "Last transaction completed successfully.");
     }
 
@@ -311,7 +316,7 @@ void finishUpdate(std::vector<CharStats> &chars,
     //Commit
     PGresult *e = PQexec(conn, "COMMIT");
     if (PQresultStatus(e) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_FATAL(Database::log, "Failed to commit batch save.");
+        LOG4CPLUS_FATAL(Database::log(), "Failed to commit batch save.");
         PQclear(e);
         assert(false);
         return;
@@ -330,21 +335,17 @@ struct UpdateParams
     PGconn *conn;
 };
 
-void *finishUpdWrapper(void *pparams)
+void finishUpdWrapper(UpdateParams *params)
 {
-    UpdateParams *params = (UpdateParams *) pparams;
     finishUpdate(params->chars, params->equips, params->items, params->skills,
         params->secrets, params->effects, params->trackers, params->conn);
     delete params;
-    return 0;
 }
 
 void CharManager::finish()
 {
-    //if (worker.joinable())
-    //	worker.join();
-    if (canJoin)
-        pthread_join(worker, NULL);
+    if (worker.joinable())
+    	worker.join();
 
     for (Character *c : outgoing) {
         saveCharacter(c);
@@ -353,19 +354,12 @@ void CharManager::finish()
 
     outgoing.clear();
 
-    /*worker = std::thread(finishUpdate, std::move(chars), std::move(equips),
-     std::move(items), std::move(skills), std::move(secrets),
-     std::move(effects), std::move(trackers), conn);*/
     UpdateParams *vects = new UpdateParams { std::move(chars), std::move(
         equips), std::move(items), std::move(skills), std::move(secrets),
         std::move(effects), std::move(trackers), conn };
-    if (pthread_create(&worker, NULL, finishUpdWrapper, (void *) vects)) {
-        LOG4CPLUS_ERROR(Database::log,
-            "Failed to create a thread for updating characters.");
-        canJoin = false;
-    }
-    else
-        canJoin = true;
+	worker = std::thread(finishUpdWrapper, vects);
+	if (!worker.joinable())
+		LOG4CPLUS_ERROR(Database::log(), "Failed to create a thread for updating characters.");
 
     items.clear();
     effects.clear();
@@ -378,7 +372,7 @@ void CharManager::finish()
     //Open new transaction
     PGresult *b = PQexec(bgconn, "BEGIN");
     if (PQresultStatus(b) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Failed to restart batch save.");
+        LOG4CPLUS_ERROR(Database::log(), "Failed to restart batch save.");
     }
     PQclear(b);
 
@@ -437,7 +431,7 @@ void CharManager::saveCharacter(Character *c)
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK) {
         PQclear(charTuple);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't clear a player's old equipment list.");
         return;
     }
@@ -469,7 +463,7 @@ void CharManager::saveCharacter(Character *c)
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK) {
         PQclear(charTuple);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't clear a player's old temporary lost items.");
         return;
     }
@@ -542,7 +536,7 @@ void CharManager::saveCharacter(Character *c)
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK) {
         PQclear(charTuple);
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't clear a player's old effects list.");
         return;
     }
@@ -636,7 +630,7 @@ void CharManager::storageQtyChange(int charId, int itemId, short mod,
         4,
         NULL, params, sizes, types, 0);
     if (PQresultStatus(su) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't update the quantity of a character's stored items.");
     }
     PQclear(su);
@@ -659,7 +653,7 @@ void CharManager::storageAddItem(int charId, int itemId, short mod, int qty)
             4,
             NULL, params, sizes, types, 0);
     if (PQresultStatus(su) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't update the quantity of a character's stored items.");
     }
     PQclear(su);
@@ -678,7 +672,7 @@ void CharManager::storageRemoveItem(int charId, int itemId, short mod)
         "DELETE FROM storage WHERE char_id=$1 AND item_id=$2 AND mod=$3", 3,
         NULL, params, sizes, types, 0);
     if (PQresultStatus(su) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't update the quantity of a character's stored items.");
     }
     PQclear(su);
@@ -706,7 +700,7 @@ void CharManager::addItem(int charId, int itemId, unsigned short slot,
             7,
             NULL, params, sizes, types, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't insert an item into a character's inventory.");
     }
     PQclear(res);
@@ -723,7 +717,7 @@ void CharManager::removeItem(int charId, unsigned short slot)
         "DELETE FROM has_item WHERE char_id=$1 AND slot=$2", 2,
         NULL, params, sizes, types, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't remove an item into a character's inventory.");
     }
     PQclear(res);
@@ -750,7 +744,7 @@ void CharManager::updateItem(int charId, unsigned short slot, short mod,
             6,
             NULL, params, sizes, types, 0);
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log,
+        LOG4CPLUS_ERROR(Database::log(),
             "Couldn't update an item in a character's inventory.");
     }
     PQclear(res);
@@ -776,7 +770,7 @@ void CharManager::addQuest(int charId, int qid, int qp, int timer)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't insert a new quest.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't insert a new quest.");
     }
 
     PQclear(charTuple);
@@ -805,7 +799,7 @@ void CharManager::updateQuest(int charId, int qid, int qp, int timer)
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK
         || strcmp(PQcmdTuples(charTuple), "1")) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't update a quest.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't update a quest.");
     }
 
     PQclear(charTuple);
@@ -835,7 +829,7 @@ void CharManager::addMark(int charId, int markId, const char* textParam,
             NULL, params, sizes, types, 0);
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't insert a new legend mark.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't insert a new legend mark.");
     }
 
     PQclear(charTuple);
@@ -865,7 +859,7 @@ void CharManager::updateMark(int charId, int markId, const char* textParam,
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK
         || strcmp(PQcmdTuples(charTuple), "1")) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't update a legend mark.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't update a legend mark.");
     }
 
     PQclear(charTuple);
@@ -887,7 +881,7 @@ void CharManager::deleteMark(int charId, int markId)
 
     if (PQresultStatus(charTuple) != PGRES_COMMAND_OK
         || strcmp(PQcmdTuples(charTuple), "1")) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't delete a legend mark.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't delete a legend mark.");
     }
 
     PQclear(charTuple);
@@ -911,7 +905,7 @@ void CharManager::addSkill(int charId, int skillId, unsigned short slot)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't insert a new skill.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't insert a new skill.");
     }
 
     PQclear(res);
@@ -932,7 +926,7 @@ void CharManager::removeSkill(int charId, unsigned short slot)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't delete a skill.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't delete a skill.");
     }
 
     PQclear(res);
@@ -957,7 +951,7 @@ void CharManager::moveSkill(int charId, unsigned short oldSlot,
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't move a skill!");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't move a skill!");
     }
 
     PQclear(res);
@@ -984,7 +978,7 @@ void CharManager::swapSkills(int charId, unsigned short slotOne,
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't swap skills.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't swap skills.");
     }
 
     PQclear(res);
@@ -997,7 +991,7 @@ void CharManager::swapSkills(int charId, unsigned short slotOne,
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't swap skills.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't swap skills.");
     }
 
     PQclear(res);
@@ -1021,7 +1015,7 @@ void CharManager::addSecret(int charId, int skillId, unsigned short slot)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't insert a new secret.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't insert a new secret.");
     }
 
     PQclear(res);
@@ -1042,7 +1036,7 @@ void CharManager::removeSecret(int charId, unsigned short slot)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't delete a secret.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't delete a secret.");
     }
 
     PQclear(res);
@@ -1067,7 +1061,7 @@ void CharManager::moveSecret(int charId, unsigned short oldSlot,
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't move a secret.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't move a secret.");
     }
 
     PQclear(res);
@@ -1094,7 +1088,7 @@ void CharManager::swapSecrets(int charId, unsigned short slotOne,
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't swap secrets.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't swap secrets.");
     }
 
     PQclear(res);
@@ -1107,7 +1101,7 @@ void CharManager::swapSecrets(int charId, unsigned short slotOne,
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't swap secrets.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't swap secrets.");
     }
 
     PQclear(res);
@@ -1132,7 +1126,7 @@ void CharManager::updatePath(int charId, unsigned short path,
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't update a player's path.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't update a player's path.");
     }
 
     PQclear(res);
@@ -1153,7 +1147,7 @@ void CharManager::updateHairstyle(int charId, unsigned short style)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't update a player's hairstyle.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't update a player's hairstyle.");
     }
 
     PQclear(res);
@@ -1174,7 +1168,7 @@ void CharManager::updateHaircolor(int charId, unsigned short color)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't update a player's haircolor.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't update a player's haircolor.");
     }
 
     PQclear(res);
@@ -1195,7 +1189,7 @@ void CharManager::updateNation(int charId, unsigned short nation)
         NULL, params, sizes, types, 0);
 
     if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        LOG4CPLUS_ERROR(Database::log, "Couldn't update a player's nation.");
+        LOG4CPLUS_ERROR(Database::log(), "Couldn't update a player's nation.");
     }
 
     PQclear(res);

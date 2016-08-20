@@ -18,7 +18,7 @@ class LoginSession: public BasicSession
 {
 public:
 
-    LoginSession(int fd, in_addr_t ip, int now);
+    LoginSession(int fd, uint32_t ip, int now);
     virtual ~LoginSession();
 
     void dataReady();
@@ -45,7 +45,7 @@ private:
     } //dont time out
     void getMotd();
 
-    static log4cplus::Logger log;
+    static log4cplus::Logger log();
 };
 
 #endif /* LOGINSESSION_H_ */

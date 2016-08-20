@@ -62,7 +62,7 @@ bool CharacterList::validatePw(const char *pw)
 }
 
 bool CharacterList::makeCharacter(std::string name, char const *pw,
-    in_addr_t ipaddr)
+    uint32_t ipaddr)
 {
     // Check time restriction
     int timeLimit = time(NULL) - 60;
@@ -161,7 +161,7 @@ Character *CharacterList::getCharacter(std::string name, CharacterSession *who,
 
     (*this)[lname] = who;
     ret->changeName(name);
-    LOG4CPLUS_INFO(core::log, name << " has logged in.");
+    LOG4CPLUS_INFO(core::log(), name << " has logged in.");
 
     return ret;
 }
@@ -174,7 +174,7 @@ void CharacterList::freeCharacter(Character *c)
     Database::cm->unlock();
 
     std::string name = c->getName();
-    LOG4CPLUS_INFO(core::log, name << " has logged out.");
+    LOG4CPLUS_INFO(core::log(), name << " has logged out.");
 
     lower(name);
     assert(erase(name));

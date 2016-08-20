@@ -59,9 +59,9 @@ void StandardAI::runAI()
 		return;
 	}
 
-	std::vector<Entity *> near;
-	mob->getMap()->getNearbyEntities(mob, near);
-	Entity *t = sleepy ? 0 : selectTarget(near, hostile);
+	std::vector<Entity *> nearby;
+	mob->getMap()->getNearbyEntities(mob, nearby);
+	Entity *t = sleepy ? 0 : selectTarget(nearby, hostile);
 
 	if (t) {
 		if (!mob->canSee(t) && mob->dist(t) > 1) {

@@ -17,6 +17,7 @@
 #include "npc_bindings.h"
 #include "core.h"
 #include "log4cplus/loggingmacros.h"
+#include "random.h"
 
 #ifdef WIN32
 #define snprintf _snprintf
@@ -122,7 +123,7 @@ bool Combat::useSkill(E *a, Skill *sk, Entity *tgt)
             return ret;
         }
         else {
-            LOG4CPLUS_WARN(core::log,
+            LOG4CPLUS_WARN(core::log(),
                 "Non-player used scripted skill " << sk->getId() << ", which is not supported yet.");
             return false;
         }

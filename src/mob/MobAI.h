@@ -35,7 +35,7 @@ public:
 	//helpers
 	bool approach(MapPoint *p);
 	bool useRandomSkill(Entity *t, double rate, SkillClassifier type = ANY);
-	Entity *selectTarget(std::vector<Entity *> &near, bool aggressive);
+	Entity *selectTarget(std::vector<Entity *> &nearby, bool aggressive);
 	void reorderTargets();
 	int stt(int sec) { return sec * TICKS - 1; }
 	void attack(Entity *t);

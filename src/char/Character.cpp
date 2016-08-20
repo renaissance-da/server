@@ -31,8 +31,10 @@
 #define snprintf _snprintf
 #endif
 
-log4cplus::Logger Character::log = log4cplus::Logger::getInstance(
-    "renaissance.character");
+log4cplus::Logger Character::log()
+{
+	return log4cplus::Logger::getInstance("renaissance.character");
+}
 
 char getShowSlot(int slot)
 {
@@ -1741,7 +1743,7 @@ bool Character::tryMove(char dir)
         else if (!DataService::getService()->tryChangeMap(this, p->getMapId(),
             p->destX(), p->destY(), 2)) {
             //Uh oh, this portal is dead
-            LOG4CPLUS_WARN(core::log,
+            LOG4CPLUS_WARN(core::log(),
                 "Portal to map " << p->getMapId() << " is pointing at " << "a non-existent map.");
         }
     }
@@ -1801,7 +1803,7 @@ void Character::die()
 
         //drop perishable items
         std::vector<unsigned int> protection { (unsigned) charId }; //protect these items
-        unsigned int protectionTime = 60 * 30; //30 minutes
+		auto protectionTime = std::chrono::minutes(30);
         for (int i = 0; i < NUM_ITEMS; i++) {
             if (inventory[i]
                 && inventory[i]->getDeathAction() == Item::PERISH) {
@@ -1873,7 +1875,7 @@ bool Character::tick(std::vector<std::function<void()> > &deferred)
     else if (secretLimit || itemLimit || refreshed) {
         limitTicks++;
     }
-    walkLimit = std::min(walkLimit + 3, 6);
+    walkLimit = (std::min)(walkLimit + 3, 6);
 
     //reduce cds
     for (int i = 0; i < NUM_SKILLS; i++) {
@@ -2120,7 +2122,7 @@ void Character::addLegendItem(int id, const char *textParam, int intParam,
     LegendItem li;
     li.base = Legend::getById(id);
     if (!li.base) {
-        LOG4CPLUS_ERROR(log,
+        LOG4CPLUS_ERROR(log(),
             "Failed to add legend ID " << id << " to character " << name << ": legend not found.");
         return;
     }
@@ -2164,7 +2166,7 @@ void Character::changeLegendQty(int id, int intParam)
     LegendItem li;
     li.base = Legend::getById(id);
     if (!li.base) {
-        LOG4CPLUS_ERROR(log,
+        LOG4CPLUS_ERROR(log(),
             "Failed to add legend ID " << id << " to character " << name << ": legend not found.");
         return;
     }
@@ -2205,7 +2207,7 @@ void Character::changeLegendQty(int id, int intParam, const char *textParam)
     LegendItem li;
     li.base = Legend::getById(id);
     if (!li.base) {
-        LOG4CPLUS_ERROR(log,
+        LOG4CPLUS_ERROR(log(),
             "Failed to add legend ID " << id << " to character " << name << ": legend not found.");
         return;
     }
@@ -2862,7 +2864,7 @@ bool Character::withdraw(int slot, int qty)
 
     BaseItem *bi = BaseItem::getById(storage[slot].id);
     if (!bi) {
-        LOG4CPLUS_ERROR(log,
+        LOG4CPLUS_ERROR(log(),
             "Item ID " << storage[slot].id << " in the storage of player " << name << " doesn't identify an item.");
         return false;
     }

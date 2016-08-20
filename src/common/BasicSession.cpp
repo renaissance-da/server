@@ -8,7 +8,7 @@
 #include "BasicSession.h"
 #include "network.h"
 
-BasicSession::BasicSession(int fd, int time, in_addr_t clientIp) :
+BasicSession::BasicSession(int fd, int time, uint32_t clientIp):
     fd(fd), open(true), clientIp(clientIp), lastRecv(time), now(time)
 {
 

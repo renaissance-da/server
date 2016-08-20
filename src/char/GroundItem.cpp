@@ -8,9 +8,9 @@
 #include "GroundItem.h"
 
 GroundItem::GroundItem(unsigned short map, unsigned short x, unsigned short y,
-    unsigned int protectionTime, std::vector<unsigned int> *lootList) :
+    std::chrono::seconds protectionTime, std::vector<unsigned int> *lootList) :
     Viewable(x, y, map), item(0), amt(0), protectionTime(
-        protectionTime + time(NULL))
+        protectionTime + std::chrono::system_clock::now())
 {
     if (lootList && lootList->size() > 0) {
         nLooters = lootList->size();
@@ -26,7 +26,7 @@ GroundItem::GroundItem(unsigned short map, unsigned short x, unsigned short y,
 }
 
 GroundItem::GroundItem(Item *item, unsigned short map, unsigned short x,
-    unsigned short y, unsigned int protectionTime,
+    unsigned short y, std::chrono::seconds protectionTime,
     std::vector<unsigned int> *lootList) :
     GroundItem(map, x, y, protectionTime, lootList)
 {
@@ -34,7 +34,7 @@ GroundItem::GroundItem(Item *item, unsigned short map, unsigned short x,
 }
 
 GroundItem::GroundItem(unsigned int amtGold, unsigned short map,
-    unsigned short x, unsigned short y, unsigned int protectionTime,
+    unsigned short x, unsigned short y, std::chrono::seconds protectionTime,
     std::vector<unsigned int> *lootList) :
     GroundItem(map, x, y, protectionTime, lootList)
 {
@@ -80,7 +80,7 @@ void GroundItem::getViewedBlock(IDataStream *dp)
  */
 bool GroundItem::canLoot(unsigned int id)
 {
-    if (lootList && protectionTime > time(NULL)) {
+    if (lootList && protectionTime > std::chrono::system_clock::now()) {
         for (int i = 0; i < nLooters; i++) {
             if (lootList[i] == id)
                 return true;

@@ -59,11 +59,6 @@ mapName(name),
 crc(crc),
 id(id),
 nPlayers(0),
-#ifndef NDEBUG
-mapLock(PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP),
-#else
-mapLock(PTHREAD_MUTEX_INITIALIZER),
-#endif
 flags(flags)
 {
 	assert(width > 0 && width < 256);
@@ -121,7 +116,6 @@ Map::~Map() {
 		timers.pop();
 	}
 
-	pthread_mutex_destroy(&mapLock);
 }
 
 void Map::togglePvp()
@@ -307,7 +301,9 @@ void Map::getTriggers(std::vector<Trigger *> &triggers, unsigned short x,
 	}
 }
 
-bool Map::putItem(Item *item, unsigned short x, unsigned short y, std::vector<unsigned int> *protection, unsigned int protectionTime)
+bool Map::putItem(Item *item, unsigned short x, unsigned short y,
+	std::vector<unsigned int> *protection,
+	std::chrono::seconds protectionTime)
 {
 	if (Map::isWall(x, y, MOVE_NO_PORTALS | MOVE_NO_DOORS))
 		return false;
@@ -376,15 +372,13 @@ void Map::addTimer(Timer *t)
 void Map::lock()
 {
 	assert(LockSet::addLock(id));
-	int r = pthread_mutex_lock(&mapLock);
-	assert(!r);
+	mapLock.lock();
 }
 
 void Map::unlock()
 {
 	assert(LockSet::removeLock(id));
-	int r = pthread_mutex_unlock(&mapLock);
-	assert(!r);
+	mapLock.unlock();
 }
 
 void Map::getZoneData(IDataStream *s)
@@ -729,7 +723,9 @@ bool Map::mapJump(Entity *e, unsigned short x, unsigned short y)
 	return true;
 }
 
-bool Map::putGold(unsigned int amt, unsigned short x, unsigned short y, std::vector<unsigned int> *protection, unsigned int protectionTime)
+bool Map::putGold(unsigned int amt, unsigned short x, unsigned short y,
+	std::vector<unsigned int> *protection, 
+	std::chrono::seconds protectionTime)
 {
 	if (isWall(x, y, MOVE_NO_PORTALS | MOVE_NO_DOORS)) {
 		return false;

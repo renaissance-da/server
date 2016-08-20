@@ -7,5 +7,7 @@
 
 #include "script.h"
 
-log4cplus::Logger script::log =
-    log4cplus::Logger::getInstance("renaissance.script");
+log4cplus::Logger script::log()
+{
+	return log4cplus::Logger::getInstance("renaissance.script");
+}

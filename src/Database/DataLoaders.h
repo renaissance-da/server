@@ -16,7 +16,7 @@
 
 namespace Database
 {
-    extern log4cplus::Logger log;
+    log4cplus::Logger log();
     
     int loadSkillDefs();
     int loadMaps(const char *mapDir);

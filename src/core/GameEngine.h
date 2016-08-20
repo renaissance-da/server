@@ -11,7 +11,7 @@
 
 #include "DataService.h"
 #include "random.h"
-#include <pthread.h>
+#include <thread>
 #include <stdlib.h>
 
 class GameEngine
@@ -22,10 +22,11 @@ public:
 
 private:
     DataService *service;
-    pthread_t thread;bool running;
+    std::thread thread;
+	bool running;
     drand48_data *rng;
 
-    static void *gameLoop(void *ge);
+    static void gameLoop(GameEngine *engine);
 
 };
 
