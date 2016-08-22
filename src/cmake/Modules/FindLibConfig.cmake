@@ -20,10 +20,11 @@ find_path(LIBCONFIG_INCLUDE_DIR
 
 find_library(LIBCONFIG_LIBRARIES
   NAMES
-    libconfig++.lib
+    config++
+    libconfig++
   PATHS
-    /usr/lib/x86_64-linux-gnu
     /usr/local
+    /usr/lib/x86_64-linux-gnu
     /usr
     /sw
     /opt/local
