@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "random.h"
+#include "random_engines.h"
 #include "BaseItem.h"
 #include "SkillInfo.h"
 #include "defines.h"
@@ -40,8 +40,8 @@ void registerAI()
     });
 }
 
-GameEngine::GameEngine(DataService *s, drand48_data *rng) :
-    service(s), rng(rng)
+GameEngine::GameEngine(DataService *s) :
+    service(s)
 {
     running = true;
     registerAI();
@@ -63,10 +63,8 @@ GameEngine::~GameEngine()
 void GameEngine::gameLoop(GameEngine *engine)
 {
 
-    rngInit(engine->rng);
-
-	auto sleep_interval = std::chrono::milliseconds(1000 / TICKS);
-
+    auto sleep_interval = std::chrono::milliseconds(1000 / TICKS);
+  
     while (engine->running) {
         //update all maps every sec
 

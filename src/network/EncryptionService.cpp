@@ -10,7 +10,7 @@
 #include "Hash.h"
 #include <stdio.h>
 #include <string.h>
-#include "random.h"
+#include "random_engines.h"
 #include "defines.h"
 #include <assert.h>
 #include <fstream>
@@ -49,10 +49,12 @@ EncryptionService::EncryptionService() :
 //key({ 'U', 'r', 'k', 'c', 'n', 'I', 't', 'n', 'I' })
 {
     //TODO fix table 9
-    seedTable = random() % 9;
+    std::uniform_int_distribution<int> seed_dist(0, 8);
+    std::uniform_int_distribution<uint8_t> byte_dist(0, 255);
+    seedTable = seed_dist(generator());
 
     for (int i = 0; i < keyLen; i++) {
-        key[i] = random() % 0x100;
+        key[i] = (char)byte_dist(generator());
     }
 }
 

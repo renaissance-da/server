@@ -10,7 +10,7 @@
 #include <algorithm>
 #include "Character.h"
 #include "Combat.h"
-#include "random.h"
+#include "random_engines.h"
 
 MobAI::MobAI(Mob *mob):
 mob(mob)
@@ -126,6 +126,7 @@ bool MobAI::useRandomSkill(Entity *t, double rate, SkillClassifier type)
 {
 	using std::vector;
 	vector<unsigned int> avail;
+	std::uniform_real_distribution<double> st_uniform_dist;
 	for (unsigned int i = 0; i < mob->skills.size(); i++) {
 		if (!mob->skills[i].first.onCd() && matchesClassifier(mob->skills[i].first, type))
 			avail.push_back(i);
@@ -135,10 +136,11 @@ bool MobAI::useRandomSkill(Entity *t, double rate, SkillClassifier type)
 	//TODO could shuffle the available skills...
 	for (unsigned ix : avail) {
 		nextRate = mob->skills[ix].second * 0.01 * rate / (1.0 - nextRate);
-		if (nextRate >= 1.0 || drandom() <= nextRate) {
-			Combat::useSkill(mob, &mob->skills[ix].first, t);
-			mob->skills[ix].first.used(false, false);
-			return true; //The skill may have failed, but it was used
+		if (nextRate >= 1.0 ||
+		    st_uniform_dist(generator()) <= nextRate) {
+		    Combat::useSkill(mob, &mob->skills[ix].first, t);
+		    mob->skills[ix].first.used(false, false);
+		    return true; //The skill may have failed, but it was used
 		}
 	}
 	return false; //failed

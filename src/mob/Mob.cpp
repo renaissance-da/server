@@ -6,7 +6,6 @@
  */
 
 #include "Mob.h"
-#include "random.h"
 #include "srv_proto.h"
 #include "DataService.h"
 #include "Character.h"

@@ -6,7 +6,7 @@
  */
 
 #include "Equipment.h"
-#include "random.h"
+#include "random_engines.h"
 #include <assert.h>
 
 Equipment::Equipment(unsigned int id, unsigned short qty, unsigned int dur) :
@@ -22,6 +22,10 @@ Equipment::~Equipment()
 
 void Equipment::randomMod()
 {
+    std::uniform_real_distribution<double> st_uniform_dist;
+    std::uniform_int_distribution<int> elem_dist(1, 4);
+    std::uniform_int_distribution<int> secondary_dist(1, 12);
+    
     if (mod) {
         delete stats;
         mod = 0;
@@ -32,7 +36,7 @@ void Equipment::randomMod()
     int rmod;
     if (getSlot() == WEAPON || getSlot() == ARMOR) {
         //Primary mods favour the lower mods
-        float r = drandom();
+        float r = st_uniform_dist(generator());
         if (r < .5) {
             rmod = 1;
         }
@@ -49,13 +53,11 @@ void Equipment::randomMod()
     }
     //ele mods
     else if (getSlot() == BELT || getSlot() == NECKLACE) {
-        rmod = (random() % 4) + 1;
-        setMod(rmod);
+        setMod(elem_dist(generator()));
     }
     //Secondary mods
     else {
-        rmod = (random() % 12) + 1;
-        setMod(rmod);
+        setMod(secondary_dist(generator()));
     }
 }
 

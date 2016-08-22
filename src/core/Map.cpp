@@ -9,7 +9,7 @@
 #include "defines.h"
 #include <algorithm>
 #include <assert.h>
-#include "random.h"
+#include "random_engines.h"
 #include "LockSet.h"
 
 #ifdef WIN32
@@ -265,15 +265,17 @@ void Map::addEntity(Entity *m, unsigned short rad)
 
 void Map::addEntityRandom(Entity *m)
 {
-	for (int i = 0; i < 10; i++) {
-		m->setX(random()%width);
-		m->setY(random()%height);
-		if (tryFindFree(m, 3))
-			break;
-	}
-
-	//TODO better method?
-	addEntity(m);
+    std::uniform_int_distribution<int> width_dist(0, width - 1);
+    std::uniform_int_distribution<int> height_dist(0, height - 1);
+    for (int i = 0; i < 10; i++) {
+	m->setX(width_dist(generator()));
+	m->setY(height_dist(generator()));
+	if (tryFindFree(m, 3))
+	    break;
+    }
+    
+    //TODO better method?
+    addEntity(m);
 }
 
 Portal *Map::addPortal(unsigned short x, unsigned short y, unsigned short xDest, unsigned short yDest, unsigned short dst)

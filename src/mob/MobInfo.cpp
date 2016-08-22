@@ -9,7 +9,7 @@
 #include <assert.h>
 #include "Map.h"
 #include "Equipment.h"
-#include "random.h"
+#include "random_engines.h"
 #include "DataService.h"
 
 namespace mob {
@@ -85,22 +85,27 @@ Mob *MobInfo::spawnById(int id, short x, short y, Map *map)
 	MobInfo &mi = *(it->second);
 
 	Element a, d;
-	a = mi.atk == N_ELEMENTS ? (Element)(random()%4 + 1) : mi.atk;
-	d = mi.def == N_ELEMENTS ? (Element)(random()%4 + 1) : mi.def;
-	Mob *mob = new Mob(x, y, map, mi.apr, mi.id, mi.hplo + drandom()*(mi.hpmax-mi.hplo),
-				mi.minDmg, mi.maxDmg, mi.exp, mi.name, mi.mode, mi.level, a, d, mi.ac,
-				mi.power, mi.mr, mi.dex, mi.size == 's', mi.regen, mi.submode);
+	std::uniform_int_distribution<int> element_dist(1, 4);
+	std::uniform_int_distribution<int> gold_dist(mi.minGold, mi.maxGold);
+	std::uniform_int_distribution<int> hp_dist(mi.hplo, mi.hpmax);
+	std::uniform_int_distribution<int> thousand_dist(0, 999);
+	a = mi.atk == N_ELEMENTS ? (Element)element_dist(generator()) : mi.atk;
+	d = mi.def == N_ELEMENTS ? (Element)element_dist(generator()) : mi.def;
+	Mob *mob = new Mob(x, y, map, mi.apr, mi.id, hp_dist(generator()),
+			   mi.minDmg, mi.maxDmg, mi.exp, mi.name, mi.mode,
+			   mi.level, a, d, mi.ac, mi.power, mi.mr, mi.dex,
+			   mi.size == 's', mi.regen, mi.submode);
 	for (Drop &drop : mi.dropList) {
-		if (random() % 1000 < drop.rate) {
-			Item *itm = new Item(drop.bi);
-			if (drop.mod < 0)
-				((Equipment *)itm)->randomMod();
-			else if (drop.mod > 0)
-				((Equipment *)itm)->setMod(drop.mod);
-			mob->giveItem(itm);
-		}
+	    if (thousand_dist(generator()) < drop.rate) {
+		Item *itm = new Item(drop.bi);
+		if (drop.mod < 0)
+		    ((Equipment *)itm)->randomMod();
+		else if (drop.mod > 0)
+		    ((Equipment *)itm)->setMod(drop.mod);
+		mob->giveItem(itm);
+	    }
 	}
-	mob->giveGold(mi.minGold + drandom() * (mi.maxGold - mi.minGold));
+	mob->giveGold(gold_dist(generator()));
 	mob->setSkills(mi.mobSkills);
 
 	if (x < 0 || y < 0)

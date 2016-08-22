@@ -17,7 +17,6 @@
 
 #ifdef WIN32
 #include <WinSock2.h>
-#include "random.h"
 #else
 #include <netinet/in.h>
 #endif
@@ -26,7 +25,7 @@
 class BasicServer
 {
 public:
-    BasicServer(drand48_data *rngData, int port, char const *name,
+    BasicServer(int port, char const *name,
         std::vector<std::pair<int, int> > &banlist);
     virtual ~BasicServer();
     void stop();
@@ -50,8 +49,6 @@ private:
     std::unordered_map<uint32_t, int> blacklist;
     std::mutex bl_mutex;
 
-protected:
-    drand48_data *rng;
 };
 
 #endif /* BASICSERVER_H_ */

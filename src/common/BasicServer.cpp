@@ -21,9 +21,9 @@
 
 // Create a server which will use a separate thread to listen on the port given
 // When a connection is ready on the port given, the virtual method startSession will be invoked
-BasicServer::BasicServer(drand48_data *rngData, int port, char const *name,
+BasicServer::BasicServer(int port, char const *name,
     std::vector<std::pair<int, int> > &banlist) :
-    port(port), listenFd(-1), running(true), name(name), rng(rngData)
+    port(port), listenFd(-1), running(true), name(name)
 {
     for (auto p : banlist) {
         blacklist[p.first] = p.second;
@@ -53,9 +53,10 @@ void BasicServer::stop()
 {
     if (running) {
         running = false;
-		listener.join();
         Socket::s_close(listenFd);
     }
+    if (listener.joinable())
+	listener.join();
     while (!clientList.empty()) {
         Socket::s_close(clientList.front()->getFd());
         delete clientList.front();
@@ -66,8 +67,6 @@ void BasicServer::stop()
 void BasicServer::startService(BasicServer *server)
 {
     using std::list;
-
-    rngInit(server->rng);
 
     int maxFd, res, newFd;
     fd_set currentConnections, readyConnections;

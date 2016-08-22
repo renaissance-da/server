@@ -18,6 +18,7 @@
 #include <postgresql/libpq-fe.h>
 #endif
 #include <unordered_map>
+#include <thread>
 
 class Character;
 class CharacterSession;

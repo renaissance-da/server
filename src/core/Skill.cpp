@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include "defines.h"
 #include "element.h"
-#include "random.h"
 #include "Entity.h"
 #include <assert.h>
 #include "config.h"

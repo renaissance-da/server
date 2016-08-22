@@ -19,15 +19,15 @@
 #include <signal.h>
 #include "DataLoaders.h"
 #include "npc_bindings.h"
-#include "random.h"
+#include "random_engines.h"
 #include "config.h"
 #include "log4cplus/configurator.h"
 #include "log4cplus/logger.h"
 #include "log4cplus/loggingmacros.h"
-#include "log4cplus/initializer.h"
 #include "LoginSession.h"
 
 #ifdef WIN32
+#include "log4cplus/initializer.h"
 #define sleep(x) Sleep(1000*x)
 #include <conio.h>
 #else
@@ -61,20 +61,11 @@ void addToBlacklists(uint32_t ip_addr, int exp)
 
 int main()
 {
+#ifdef WIN32
 	log4cplus::Initializer initializer;
-
+#endif
+	
 	using namespace Database;
-	drand48_data loginSrvRng, dataSrvRng, gameEngRng;
-	time_t tp;
-	long seed, v2;
-	time(&tp);
-	srand48_r(tp, &loginSrvRng);
-	// Random number I picked
-	srand48_r(tp ^ 0x15607FE3, &dataSrvRng);
-	lrand48_r(&loginSrvRng, &seed);
-	lrand48_r(&dataSrvRng, &v2);
-	srand48_r(seed^v2, &gameEngRng);
-
 	if (!config::parse("daserver.conf")) {
 	    return 1;
 	}
@@ -117,9 +108,9 @@ int main()
 	fcntl(0, F_SETFL, O_NONBLOCK | flags);
 #endif
 
-	charServer = new CharacterServer(&dataSrvRng, banlist);
-	loginServer = new LoginServer(&loginSrvRng, banlist);
-	GameEngine *ge = new GameEngine(DataService::getService(), &gameEngRng);
+	charServer = new CharacterServer(banlist);
+	loginServer = new LoginServer(banlist);
+	GameEngine *ge = new GameEngine(DataService::getService());
 	bool csUp = false, lsUp = false;
 
 #ifndef WIN32

@@ -8,7 +8,7 @@
 #include "Character.h"
 #include "Skill.h"
 #include <string.h>
-#include "random.h"
+#include "random_engines.h"
 #include "GameTime.h"
 #include <stdio.h>
 #include "DataService.h"
@@ -33,7 +33,7 @@
 
 log4cplus::Logger Character::log()
 {
-	return log4cplus::Logger::getInstance("renaissance.character");
+    return log4cplus::Logger::getInstance("renaissance.character");
 }
 
 char getShowSlot(int slot)
@@ -1694,8 +1694,9 @@ void Character::levelUp()
 {
     ++level;
     //max hp/mp are increased by 20<>30 + 50con_wis/newLevel
-    int hpGain = 20 + baseStats.getCon() * 50 / level + random() % 11;
-    int mpGain = 20 + baseStats.getWis() * 50 / level + random() % 11;
+    std::uniform_int_distribution<int> hpmp_dist(0, 10);
+    int hpGain = 20 + baseStats.getCon() * 50 / level + hpmp_dist(generator());
+    int mpGain = 20 + baseStats.getWis() * 50 / level + hpmp_dist(generator());
     baseStats.incHp(hpGain);
     stats.incHp(hpGain);
     baseStats.incMp(mpGain);
@@ -1741,10 +1742,12 @@ bool Character::tryMove(char dir)
             Server::fieldWarp(session, f->name, f->dests);
         }
         else if (!DataService::getService()->tryChangeMap(this, p->getMapId(),
-            p->destX(), p->destY(), 2)) {
-            //Uh oh, this portal is dead
-            LOG4CPLUS_WARN(core::log(),
-                "Portal to map " << p->getMapId() << " is pointing at " << "a non-existent map.");
+							  p->destX(),
+							  p->destY(), 2)) {
+	    //Uh oh, this portal is dead
+	    LOG4CPLUS_WARN(core::log(),
+			   "Portal to map " << p->getMapId() <<
+			   " is pointing at " << "a non-existent map.");
         }
     }
     if (r)
@@ -2207,7 +2210,7 @@ void Character::changeLegendQty(int id, int intParam, const char *textParam)
     LegendItem li;
     li.base = Legend::getById(id);
     if (!li.base) {
-        LOG4CPLUS_ERROR(log(),
+	LOG4CPLUS_ERROR(log(),
             "Failed to add legend ID " << id << " to character " << name << ": legend not found.");
         return;
     }

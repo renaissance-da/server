@@ -14,8 +14,7 @@
 class LoginServer: public BasicServer
 {
 public:
-    LoginServer(drand48_data *rngData,
-        std::vector<std::pair<int, int> > &banlist, int port = 2610);
+    LoginServer(std::vector<std::pair<int, int> > &banlist, int port = 2610);
     virtual ~LoginServer();
 
     BasicSession *startSession(int sockfd, sockaddr_in *addr);

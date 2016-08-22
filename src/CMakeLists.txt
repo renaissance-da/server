@@ -24,7 +24,7 @@ set (renaissance_SRCS DataService.cpp main.cpp char/BaseConsumable.cpp    core/S
 char/BaseEquipment.cpp   core/core.cpp           core/StatusEffect.cpp
 char/BaseItem.cpp        common/md5hash.cpp      core/StatusTrap.cpp
 char/Character.cpp       common/network.cpp      core/Trap.cpp
-char/CharacterList.cpp   common/random.cpp       core/Trigger.cpp
+char/CharacterList.cpp   common/random_engines.cpp       core/Trigger.cpp
 char/Consumable.cpp      core/BaseEffect.cpp     Database/CharManager.cpp
 char/Equipment.cpp       core/Combat.cpp         Database/DataLoaders.cpp
 char/Exchange.cpp        core/Door.cpp           mob/MobAI.cpp

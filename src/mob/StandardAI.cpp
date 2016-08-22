@@ -7,7 +7,7 @@
 
 #include "StandardAI.h"
 #include "Combat.h"
-#include "random.h"
+#include "random_engines.h"
 
 StandardAI::StandardAI(Mob *mob, int subMode):
 MobAI(mob),
@@ -78,7 +78,8 @@ void StandardAI::runAI()
 				return;
 			}
 			//Move randomly
-			mob->tryMove(random() % 4);
+			std::uniform_int_distribution<int> dir_dist(0, 3);
+			mob->tryMove(dir_dist(generator()));
 			actDelay = stt(1);
 			return;
 		}
@@ -110,23 +111,25 @@ void StandardAI::runAI()
 	}
 
 	else {
-		int choice = random() % 6;
-		switch (choice) {
-		case 0:
-		case 1:
-		case 2:
-			mob->tryMove(random()%4);
-			actDelay = stt(1);
-			break;
-		case 3:
-		case 4:
-			mob->tryTurn(random()%4);
-			actDelay = stt(2);
-			break;
-		case 5:
-			actDelay = 1;
-			break;
-		}
+	    std::uniform_int_distribution<int> choice_dist(0, 5);
+	    std::uniform_int_distribution<int> dir_dist(0, 3);
+	    int choice = choice_dist(generator());
+	    switch (choice) {
+	    case 0:
+	    case 1:
+	    case 2:
+		mob->tryMove(dir_dist(generator()));
+		actDelay = stt(1);
+		break;
+	    case 3:
+	    case 4:
+		mob->tryTurn(dir_dist(generator()));
+		actDelay = stt(2);
+		break;
+	    case 5:
+		actDelay = 1;
+		break;
+	    }
 	}
 }
 

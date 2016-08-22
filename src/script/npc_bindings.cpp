@@ -13,7 +13,7 @@
 #include "DataService.h"
 #include "Map.h"
 #include "ScriptTrigger.h"
-#include "random.h"
+#include "random_engines.h"
 #include "lower.h"
 #include "char_bindings.h"
 #include "entity_bindings.h"
@@ -343,7 +343,9 @@ int script::upgrade(lua_State *L)
 	int type = (int)lua_tonumber(L, 2);
 	int rate = (int)lua_tonumber(L, 3);
 
-	if (rate < 100 && ((random() % 100) >= rate)) {
+	std::uniform_int_distribution<int> dist(0, 99);
+	
+	if (rate < 100 && dist(generator()) >= rate) {
 		return 0;
 	}
 	//here im assuming this is the upgrader's function, but what if it should work

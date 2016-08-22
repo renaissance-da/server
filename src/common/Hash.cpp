@@ -7,7 +7,7 @@
 
 #include "Hash.h"
 #include <string.h>
-#include "random.h"
+#include "random_engines.h"
 
 const unsigned int k[64] = { 0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5,
     0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5, 0xd807aa98, 0x12835b01,
@@ -103,6 +103,6 @@ void initSalt(char *salt)
 {
     uint32_t *usalt = (uint32_t *) salt;
     for (int i = 0; i < 8; i++) {
-        usalt[i] = random_s();
+	usalt[i] = (uint32_t)generator()();
     }
 }

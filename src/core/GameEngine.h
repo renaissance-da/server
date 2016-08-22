@@ -10,21 +10,20 @@
 #define GAMEENGINE_H_
 
 #include "DataService.h"
-#include "random.h"
 #include <thread>
 #include <stdlib.h>
 
 class GameEngine
 {
 public:
-    GameEngine(DataService *s, drand48_data *rng);
-    ~GameEngine();bool isRunning();
+    GameEngine(DataService *s);
+    ~GameEngine();
+    bool isRunning();
 
 private:
     DataService *service;
     std::thread thread;
-	bool running;
-    drand48_data *rng;
+    bool running;
 
     static void gameLoop(GameEngine *engine);
 

@@ -17,9 +17,8 @@
 #include <unistd.h>
 #endif
 
-LoginServer::LoginServer(drand48_data *rngData,
-    std::vector<std::pair<int, int> > &banlist, int port) :
-    BasicServer(rngData, port, "LoginServer", banlist)
+LoginServer::LoginServer(std::vector<std::pair<int, int> > &banlist, int port):
+    BasicServer(port, "LoginServer", banlist)
 {
 }
 

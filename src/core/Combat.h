@@ -17,7 +17,7 @@
 #include "npc_bindings.h"
 #include "core.h"
 #include "log4cplus/loggingmacros.h"
-#include "random.h"
+#include "random_engines.h"
 
 #ifdef WIN32
 #define snprintf _snprintf
@@ -73,6 +73,8 @@ bool Combat::useSkill(E *a, Skill *sk, Entity *tgt)
     //They may or may not cause the hp bar to show. They may or may not cause
     //status effects. They may or may not use the target parameter
 
+    std::uniform_int_distribution<int> percent_dist(0, 99);
+    
     //Check if map bars skills
     Map *m = a->getMap();
     if (m->noSkills()) {
@@ -151,8 +153,9 @@ bool Combat::useSkill(E *a, Skill *sk, Entity *tgt)
 
         //Does the spell get deflected?
         if (sk->getFlags() & MISS) {
+	    
             if (rec->getStats() == STATS_INVULNERABLE
-                || rec->getStats()->getMr() > (random() % 10)) {
+                || rec->getStats()->getMr() > percent_dist(generator()) / 10) {
                 rec->playEffect(0x21, 100);
                 sendMessage(a, "The spell has been deflected.");
                 continue;
@@ -161,7 +164,7 @@ bool Combat::useSkill(E *a, Skill *sk, Entity *tgt)
         chargeMp = true;
 
         //Does the skill work?
-        if (skillRate(a, (*it), sk) <= random() % 100) {
+        if (skillRate(a, (*it), sk) <= percent_dist(generator())) {
             if (!no_fail)
                 sendMessage(a, "Failed.");
             if (sk->getFlags() & MISS)
@@ -172,13 +175,13 @@ bool Combat::useSkill(E *a, Skill *sk, Entity *tgt)
         //Reflect?
         if ((sk->getFlags() & DEFLECT)
             && rec->hasEffect(StatusEffect::ATTACK_REFLECT))
-            if ((random() % 100) < 70)
+            if (percent_dist(generator()) < 70)
                 rec = a;
 
         //Magic reflect
         if (sk->getTargetType() == TARGET_TARGET
             && rec->hasEffect(StatusEffect::MAGIC_REFLECT))
-            if ((random() % 100) < 30)
+            if (percent_dist(generator()) < 30)
                 rec = a;
 
         tdef = rec->getType();

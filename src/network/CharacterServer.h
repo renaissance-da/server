@@ -12,8 +12,8 @@
 class CharacterServer: public BasicServer
 {
 public:
-    CharacterServer(drand48_data *rngData,
-        std::vector<std::pair<int, int> > &banlist, int port = 2615);
+    CharacterServer(std::vector<std::pair<int, int> > &banlist,
+		    int port = 2615);
     virtual ~CharacterServer();
 
     BasicSession *startSession(int sockfd, sockaddr_in *addr);

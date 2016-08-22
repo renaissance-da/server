@@ -8,7 +8,7 @@
 #include "Combat.h"
 #include "defines.h"
 #include "srv_proto.h"
-#include "random.h"
+#include "random_engines.h"
 #include "DataService.h"
 #include "element.h"
 #include <assert.h>
@@ -210,8 +210,10 @@ void Combat::getTargets(Entity *a, Skill *sk, Entity *tgt,
 bool Combat::specialEffect(Character *user, Skill *sk,
     std::vector<Entity *> &targets)
 {
+    std::uniform_int_distribution<int> percent_dist(0, 99);
+  
     Entity *target = targets.size() ? targets[0] : 0;
-
+    
     char buffer[1024];
     short dx, dy, prefDir;
     std::vector<Entity *> auxillary;
@@ -574,7 +576,7 @@ case SK_AMBUSH:
             return false;
     }
 
-    if (skillRate(user, target, sk) <= random() % 100) {
+    if (skillRate(user, target, sk) <= percent_dist(generator())) {
         Server::sendMessage(user->getSession(), "Failed");
         return true;
     }
@@ -598,7 +600,7 @@ case SK_AMBUSH:
     Server::sendMessage(user->getSession(), "You can't do it.");
     return true;
 case SK_CHARGE:
-    if (skillRate(user, 0, sk) <= random() % 100) {
+    if (skillRate(user, 0, sk) <= percent_dist(generator())) {
         Server::sendMessage(user->getSession(), "Failed");
         return true;
     }
@@ -615,7 +617,7 @@ case SK_CHARGE:
 
     return true;
 case SK_BULLRUSH:
-    if (skillRate(user, 0, sk) <= random() % 100) {
+    if (skillRate(user, 0, sk) <= percent_dist(generator())) {
         Server::sendMessage(user->getSession(), "Failed");
         return true;
     }
@@ -644,7 +646,7 @@ case SK_BULLRUSH:
 
     return true;
 case SK_BACKSLIDE:
-    if (skillRate(user, 0, sk) <= random() % 100) {
+    if (skillRate(user, 0, sk) <= percent_dist(generator())) {
         Server::sendMessage(user->getSession(), "Failed");
         return true;
     }
@@ -665,7 +667,7 @@ case SK_TWISTER_STRIKE:
     if (!target)
         return false;
 
-    if (skillRate(user, 0, sk) <= random() % 100) {
+    if (skillRate(user, 0, sk) <= percent_dist(generator())) {
         Server::sendMessage(user->getSession(), "Failed");
         return true;
     }
@@ -708,7 +710,7 @@ case SK_CAIRDE_GLAOCH:
     }
     return false;
 case SK_FAS_SPIORAD:
-    if (skillRate(user, 0, sk) <= random() % 100) {
+    if (skillRate(user, 0, sk) <= percent_dist(generator())) {
         Server::sendMessage(user->getSession(), "Failed");
         return true;
     }
@@ -739,7 +741,7 @@ case SK_BREISLEICH:
     /*no break*/
 case SK_MOR_BREISLEICH:
 case SK_AMNESIA:
-    if (!target || skillRate(user, target, sk) < (random() % 100)) {
+    if (!target || skillRate(user, target, sk) < percent_dist(generator())) {
         Server::sendMessage(user->getSession(), "Failed.");
         return false;
     }
@@ -749,7 +751,7 @@ case SK_AMNESIA:
 case SK_RESCUE:
     if (!target)
         return false;
-    if (skillRate(user, target, sk) < (random() % 100))
+    if (skillRate(user, target, sk) < percent_dist(generator()))
         Server::sendMessage(user->getSession(), "Failed");
     else if (target->getType() == Entity::E_MOB)
         ((Mob *) target)->taunt(user);
@@ -1012,6 +1014,13 @@ float Combat::skillDmg(Entity *a, Entity *d, Skill *sk)
 
     const Stats *atk = a->getStats();
     const Stats *def;
+    
+    std::uniform_int_distribution<int> weapon_dist_s(atk->getAtkMin(),
+						     atk->getAtkMax());
+    std::uniform_int_distribution<int> weapon_dist_l(atk->getAtkMinL(),
+						     atk->getAtkMaxL());
+    std::uniform_int_distribution<int> percent_dist(0, 99);
+    std::uniform_real_distribution<double> st_uniform_dist;
 
     if (d) {
         //Elemental modifier
@@ -1038,11 +1047,9 @@ case SK_THRASH:
 case SK_TRIPLE_KICK:
 case SK_MIDNIGHT_SLASH:
     if (d->isSmall())
-        dmg = atk->getAtkMin() + drandom() * atk->getAtkRange()
-            + atk->getDmg() * 3.0;
+        dmg = weapon_dist_s(generator()) + atk->getDmg() * 3.0;
     else
-        dmg = atk->getAtkMinL() + drandom() * atk->getAtkRangeL()
-            + atk->getDmg() * 3.0;
+        dmg = weapon_dist_l(generator()) + atk->getDmg() * 3.0;
     atkLev = atkLev * 8 / 9;
     dmg += (
         atk->getStr() - atkLev > 0 ?
@@ -1059,7 +1066,7 @@ case SK_MIDNIGHT_SLASH:
             dmg *= 2.0;
     }
     //Test crit
-    if ((random() % 100) < (atk->getDex() - a->getLevel() / 3) / 3)
+    if (percent_dist(generator()) < (atk->getDex() - a->getLevel() / 3) / 3)
         dmg *= 2.0;
 
     break;
@@ -1067,16 +1074,16 @@ case SK_WIND_BLADE:
 case SK_EAGLE_STRIKE:
     //TODO check formula for damage
     if (d->isSmall())
-        dmg = atk->getAtkMin() + drandom() * atk->getAtkRange();
+        dmg = weapon_dist_s(generator());
     else
-        dmg = atk->getAtkMinL() + drandom() * atk->getAtkRangeL();
+        dmg = weapon_dist_l(generator());
     dmg += atk->getStr() * 1.5;
     break;
 case SK_CYCLONE_BLADE:
     if (d->isSmall())
-        dmg = atk->getAtkMin() + drandom() * atk->getAtkRange();
+        dmg = weapon_dist_s(generator());
     else
-        dmg = atk->getAtkMin() + drandom() * atk->getAtkRange();
+        dmg = weapon_dist_l(generator());
     dmg += atk->getStr();
     dmg *= 2.0 + 0.03 * sk->getLevel();
     break;
@@ -1129,35 +1136,39 @@ case SK_TRANSFER_BLOOD:
     a->struck(0, dmg);
     break;
 case SK_ASSASSINS_STRIKE:
+{
     //Assassin's strike should do damage as though for 100 assails with double the modifiers
     //Here, a normal distribution is used instead of rolling 100 assails
     //In particular, the sample mean should be N(average assail damage, uniform dmg deviation / 10)
     if (d->isSmall()) {
-        dmg = (atk->getAtkMin() + atk->getAtkMax()) / 2.0 + atk->getDmg() * 3.0;
+        dmg = (atk->getAtkMin() + atk->getAtkMax()) / 2.0 +
+	    atk->getDmg() * 3.0;
         atkRange = atk->getAtkRange() / 34.64101615;
     }
     else {
-        dmg = (atk->getAtkMinL() + atk->getAtkMaxL()) / 2.0
-            + atk->getDmg() * 3.0;
+        dmg = (atk->getAtkMinL() + atk->getAtkMaxL()) / 2.0 +
+            atk->getDmg() * 3.0;
         atkRange = atk->getAtkRangeL() / 34.64101615;
     }
-
+    
     atkLev = atkLev * 8 / 9;
     dmg += (
         atk->getStr() - atkLev > 0 ?
-            (1.5 + .045 * sk->getLevel()) * (atk->getStr() - atkLev) : 0.0);
+	(1.5 + .045 * sk->getLevel()) * (atk->getStr() - atkLev) : 0.0);
     //Hit and crit rates
+    const float crit_rate = (std::max)
+	((atk->getDex() - a->getLevel() * 0.333) * 0.00333, 0.0);
     dmg = dmg * skillRate(a, d, sk)
-        * (1.0 + (atk->getDex() - a->getLevel() * 0.333) * 0.333);
-    //Could update the deviation for more accuracy if wanted
+	* (1.0 + crit_rate);
+    atkRange *= skillRate(a, d, sk)
+	* (1.0 + crit_rate);
 
-    //box-muller method
-    dmg = 100.0
-        * (dmg
-            + atkRange * sqrt(-2.0 * log(drandom()))
-                * cos(2 * 3.14159265 * drandom()));
+    std::normal_distribution<double> dist(dmg, atkRange);
+    dmg = (std::min)(dist(generator()), dmg * 100.0);
+    dmg = (std::max)(1.0f, dmg);
     multiplier *= multiplier;
     break;
+}
 case SK_BULLRUSH_STRIKE:
     dmg = (atk->getStr() * (16.0 + 0.345 * atk->getStr()))
         * (0.5 + 0.005 * sk->getLevel());
@@ -1268,7 +1279,7 @@ case SK_ARD_PUINNEAG_SPIORAD:
     }
     return 0.0;
 case SK_PIAN_NA_DION:
-    return 12500.0 + 5000.0 * drandom();
+    return 12500.0 + 5000.0 * st_uniform_dist(generator());
 case SK_DACHAIDH:
     if (a->getType() == Entity::E_CHARACTER)
         if (!DataService::getService()->tryChangeMap((Character *) a, START_MAP,

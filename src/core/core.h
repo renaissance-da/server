@@ -5,8 +5,7 @@
 
 namespace core
 {
-extern log4cplus::Logger log();
+    log4cplus::Logger log();
 }
-;
 
 #endif
