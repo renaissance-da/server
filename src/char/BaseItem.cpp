@@ -30,7 +30,6 @@ BaseItem::BaseItem(const char *name, unsigned short groundApr,
 
 BaseItem::~BaseItem()
 {
-    items.erase(id);
 }
 
 void BaseItem::clear()

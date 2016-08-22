@@ -6,18 +6,26 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 if(UNIX)
     set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -DTHREADSAFE -D_REENTRANT")
 endif()
+if(WIN32)
+	set ( Lua_ADDITIONAL_SEARCH_PATHS "${CMAKE_SOURCE_DIR}/../windows/lua" )
+	set ( LOG4CPLUS_DIR "${CMAKE_SOURCE_DIR}/../windows/log4cplus" )
+	set ( LIBCONFIG_DIR "${CMAKE_SOURCE_DIR}/../windows/libconfig" )
+	set ( ZLIB_ROOT "${CMAKE_SOURCE_DIR}/../windows/zlib" )
+	set ( CMAKE_INCLUDE_PATH ${CMAKE_INCLUDE_PATH} "<Your Path>/include" )
+endif()
 
-set(PostgreSQL_ADDITIONAL_VERSIONS "9.3.4")
-set(PostgreSQL_ADDITIONAL_SEARCH_PATHS "/usr/include/postgresql/9.3/server")
-set(PostgreSQL_INCLUDE_DIR "/usr/include/postgresql")
-set(PostgreSQL_LIBRARY_DIR "/usr/lib/postgresql")
+#set(PostgreSQL_ADDITIONAL_VERSIONS "9.3.4")
+#set(PostgreSQL_ADDITIONAL_SEARCH_PATHS "/usr/include/postgresql/9.3/server")
+
 find_package(PostgreSQL REQUIRED)
 
 find_package(Lua REQUIRED)
 set( CMAKE_THREAD_PREFER_PTHREAD )
 find_package(Threads REQUIRED)
 find_package(Log4cplus REQUIRED)
-# find_library(LIBCONFIG_LIBRARY NAMES libconfig++)
+find_package(LibConfig REQUIRED)
+find_package(ZLIB REQUIRED)
+#find_library(LIBCONFIG_LIBRARY NAMES libconfig++)
 # set(LIBCONFIG_LIBRARIES ${LIBCONFIG_LIBRARY})
 
 set (renaissance_SRCS DataService.cpp main.cpp char/BaseConsumable.cpp    core/Stats.cpp
@@ -49,9 +57,15 @@ core/Instance.cpp        char/Guild.cpp          common/LockSet.cpp
 char/LockedChar.cpp)
 
 include_directories(. char common core Database mob network script ${PostgreSQL_INCLUDE_DIRS} ${LUA_INCLUDE_DIR}
-  ${LOG4CPLUS_INCLUDE_DIR})
+  ${LOG4CPLUS_INCLUDE_DIR} ${LIBCONFIG_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS} )
 
+link_directories(${PostgreSQL_LIBRARY_DIRS})
+  
 add_executable(DAServer ${renaissance_SRCS})
 
-target_link_libraries ( DAServer ${PostgreSQL_LIBRARIES} ${LUA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} "-lconfig++"
-  ${LOG4CPLUS_LIBRARIES} "-lz" )
+if(WIN32)
+    target_link_libraries( DAServer ws2_32 )
+endif()
+
+target_link_libraries ( DAServer ${PostgreSQL_LIBRARIES} ${LUA_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${LIBCONFIG_LIBRARIES}
+  ${LOG4CPLUS_LIBRARIES} ${ZLIB_LIBRARIES} )

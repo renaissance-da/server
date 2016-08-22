@@ -18,7 +18,6 @@
 #include <fstream>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 log4cplus::Logger LoginSession::log()
 {

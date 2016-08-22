@@ -53,10 +53,9 @@ void BasicServer::stop()
 {
     if (running) {
         running = false;
-        Socket::s_close(listenFd);
     }
     if (listener.joinable())
-	listener.join();
+		listener.join();
     while (!clientList.empty()) {
         Socket::s_close(clientList.front()->getFd());
         delete clientList.front();
@@ -150,6 +149,7 @@ void BasicServer::startService(BasicServer *server)
         }
     }
 
+	Socket::s_close(server->listenFd);
 }
 
 std::string BasicServer::statusText()

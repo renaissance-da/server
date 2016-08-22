@@ -50,7 +50,7 @@ EncryptionService::EncryptionService() :
 {
     //TODO fix table 9
     std::uniform_int_distribution<int> seed_dist(0, 8);
-    std::uniform_int_distribution<uint8_t> byte_dist(0, 255);
+    std::uniform_int_distribution<int> byte_dist(0, 255);
     seedTable = seed_dist(generator());
 
     for (int i = 0; i < keyLen; i++) {
@@ -117,11 +117,11 @@ void EncryptionService::decrypt(DAPacket *p)
 
 void EncryptionService::encrypt(DAPacket *p)
 {
-    long int result;
-    result = random();
-    p->appendByte(result % 0x100);
-    p->appendByte((result >> 8) % 0x100);
-    p->appendByte((result >> 16) % 0x100);
+	std::uniform_int_distribution<int> dist(0, 255);
+
+    p->appendByte((char)dist(generator()));
+    p->appendByte((char)dist(generator()));
+    p->appendByte((char)dist(generator()));
 
     switch (p->getCode()) {
     case 0x01: //unverified
